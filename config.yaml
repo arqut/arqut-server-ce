@@ -26,11 +26,7 @@ turn:
     mode: "rest"
     secret: "change-this-secret-in-production"
     ttl_seconds: 86400
-    # For static auth mode:
-    # mode: "static"
-    # static_users:
-    #   - username: "user1"
-    #     password: "pass1"
+   
 
 signaling:
   ports:

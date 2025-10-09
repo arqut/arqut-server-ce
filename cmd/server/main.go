@@ -10,8 +10,11 @@ import (
 
 	"github.com/arqut/arqut-server-ce/internal/acme"
 	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/internal/registry"
+	"github.com/arqut/arqut-server-ce/internal/signaling"
 	"github.com/arqut/arqut-server-ce/internal/turn"
 	"github.com/arqut/arqut-server-ce/pkg/logger"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -67,11 +70,36 @@ func main() {
 	}
 	defer turnServer.Stop()
 
+	// Initialize peer registry
+	peerRegistry := registry.New()
+
+	// Initialize signaling server
+	signalingServer := signaling.New(&cfg.Signaling, peerRegistry, log.Logger)
+	signalingServer.Start()
+	defer signalingServer.Stop()
+
+	// Initialize Fiber app for REST API and signaling
+	app := fiber.New(fiber.Config{
+		AppName:               "ArqTurn Server",
+		DisableStartupMessage: true,
+	})
+
+	// Register signaling WebSocket routes
+	v1 := app.Group("/v1")
+	signalingServer.RegisterRoutes(v1)
+
 	// TODO: Initialize remaining components
-	// - Signaling server
-	// - Peer registry
-	// - REST API
+	// - REST API (TURN credentials, peer management)
 	// - Admin API
+
+	// Start HTTP server
+	go func() {
+		addr := fmt.Sprintf(":%d", cfg.Signaling.Ports.WS)
+		log.Info("HTTP/WebSocket server starting", "addr", addr)
+		if err := app.Listen(addr); err != nil {
+			log.Error("HTTP server error", "error", err)
+		}
+	}()
 
 	log.Info("Server initialized successfully")
 
