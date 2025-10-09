@@ -18,17 +18,8 @@ import (
 
 // runServer starts the main server
 func runServer() {
-	// Parse command-line flags
-	configPath := "config.yaml"
-	for i := 1; i < len(os.Args); i++ {
-		if os.Args[i] == "-config" && i+1 < len(os.Args) {
-			configPath = os.Args[i+1]
-			break
-		}
-	}
-
 	// Load configuration
-	cfg, err := config.Load(configPath)
+	cfg, err := config.Load(cfgFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load config: %v\n", err)
 		os.Exit(1)
@@ -52,7 +43,7 @@ func runServer() {
 		fmt.Fprintln(os.Stderr, "ERROR: No API key configured in config.yaml")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Generate an API key with:")
-		fmt.Fprintf(os.Stderr, "    %s apikey generate -config %s\n", os.Args[0], configPath)
+		fmt.Fprintf(os.Stderr, "    %s apikey generate -c %s\n", os.Args[0], cfgFile)
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "This will create a new API key and add it to your configuration.")
 		os.Exit(1)
@@ -133,7 +124,7 @@ func runServer() {
 		case syscall.SIGHUP:
 			log.Info("Received SIGHUP, reloading configuration")
 			// Reload configuration
-			newCfg, err := config.Load(configPath)
+			newCfg, err := config.Load(cfgFile)
 			if err != nil {
 				log.Error("Failed to reload config", "error", err)
 				continue

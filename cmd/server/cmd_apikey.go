@@ -9,50 +9,47 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
+	"github.com/spf13/cobra"
 )
 
-// handleAPIKeyCommand routes to the appropriate API key management command
-func handleAPIKeyCommand() {
-	if len(os.Args) < 3 {
-		printAPIKeyUsage()
-		os.Exit(1)
-	}
-
-	command := os.Args[2]
-	configPath := "config.yaml"
-
-	// Look for -config flag
-	for i := 3; i < len(os.Args); i++ {
-		if os.Args[i] == "-config" && i+1 < len(os.Args) {
-			configPath = os.Args[i+1]
-			break
-		}
-	}
-
-	switch command {
-	case "generate":
-		generateAPIKey(configPath)
-	case "rotate":
-		rotateAPIKey(configPath)
-	case "status":
-		statusAPIKey(configPath)
-	default:
-		fmt.Fprintf(os.Stderr, "Unknown apikey command: %s\n\n", command)
-		printAPIKeyUsage()
-		os.Exit(1)
-	}
+var apikeyCmd = &cobra.Command{
+	Use:   "apikey",
+	Short: "Manage API keys",
+	Long:  `Generate, rotate, and check status of API keys for REST API authentication`,
 }
 
-func printAPIKeyUsage() {
-	fmt.Println("Usage: arqut-server apikey <command> [options]")
-	fmt.Println()
-	fmt.Println("Commands:")
-	fmt.Println("  generate    Generate a new API key")
-	fmt.Println("  rotate      Rotate (replace) the existing API key")
-	fmt.Println("  status      Show API key status")
-	fmt.Println()
-	fmt.Println("Options:")
-	fmt.Println("  -config     Path to config file (default: config.yaml)")
+var generateCmd = &cobra.Command{
+	Use:   "generate",
+	Short: "Generate a new API key",
+	Long:  `Generate a new API key and save it to the configuration file. Creates default config if it doesn't exist.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		generateAPIKey(cfgFile)
+	},
+}
+
+var rotateCmd = &cobra.Command{
+	Use:   "rotate",
+	Short: "Rotate the existing API key",
+	Long:  `Replace the existing API key with a new one. This will invalidate the old key.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		rotateAPIKey(cfgFile)
+	},
+}
+
+var statusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show API key status",
+	Long:  `Display the current API key status and creation timestamp`,
+	Run: func(cmd *cobra.Command, args []string) {
+		statusAPIKey(cfgFile)
+	},
+}
+
+func init() {
+	apikeyCmd.AddCommand(generateCmd)
+	apikeyCmd.AddCommand(rotateCmd)
+	apikeyCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(apikeyCmd)
 }
 
 func generateAPIKey(configPath string) {
@@ -176,7 +173,7 @@ func statusAPIKey(configPath string) {
 		fmt.Println("Status: No API key configured")
 		fmt.Println()
 		fmt.Println("Generate an API key with:")
-		fmt.Printf("    arqut-server apikey generate -config %s\n", configPath)
+		fmt.Printf("    arqut-server apikey generate -c %s\n", configPath)
 	} else {
 		fmt.Println("Status: API key configured")
 		if cfg.API.APIKey.CreatedAt != "" {
