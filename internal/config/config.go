@@ -90,6 +90,13 @@ type SignalingPorts struct {
 type APIConfig struct {
 	Port        int      `koanf:"port"`
 	CORSOrigins []string `koanf:"cors_origins"`
+	APIKey      APIKeyConfig `koanf:"api_key"`
+}
+
+// APIKeyConfig holds API key configuration
+type APIKeyConfig struct {
+	Hash      string `koanf:"hash"`
+	CreatedAt string `koanf:"created_at"`
 }
 
 // AdminConfig holds admin API configuration

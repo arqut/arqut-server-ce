@@ -83,3 +83,8 @@ help:
 	@echo "  tidy           - Tidy go.mod and go.sum"
 	@echo "  clean          - Remove build artifacts"
 	@echo "  help           - Show this help message"
+	@echo ""
+	@echo "API Key Management (use the built binary):"
+	@echo "  ./build/arqut-server apikey generate    - Generate new API key"
+	@echo "  ./build/arqut-server apikey rotate      - Rotate existing API key"
+	@echo "  ./build/arqut-server apikey status      - Show API key status"
