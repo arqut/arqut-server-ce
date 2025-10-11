@@ -1,4 +1,4 @@
-.PHONY: build run test coverage coverage-html clean install-deps tidy
+.PHONY: build run dev test coverage coverage-html clean install-deps tidy apikey-generate apikey-rotate apikey-status help
 
 # Binary name
 BINARY_NAME=arqut-server
@@ -25,9 +25,14 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server
 
-# Run the server (development)
-run:
-	$(GORUN) ./cmd/server -config config.yaml
+# Run the server (development mode - no build)
+dev:
+	$(GORUN) ./cmd/server -c config.yaml
+
+# Run the built server
+run: build
+	@echo "Starting server..."
+	$(BUILD_DIR)/$(BINARY_NAME) -c config.yaml
 
 # Install dependencies
 install-deps:
@@ -71,11 +76,25 @@ clean:
 	rm -rf $(BUILD_DIR)
 	rm -f coverage.out coverage.html
 
+# API Key management targets
+apikey-generate: build
+	@echo "Generating API key..."
+	$(BUILD_DIR)/$(BINARY_NAME) apikey generate -c config.yaml
+
+apikey-rotate: build
+	@echo "Rotating API key..."
+	$(BUILD_DIR)/$(BINARY_NAME) apikey rotate -c config.yaml
+
+apikey-status: build
+	@echo "Checking API key status..."
+	$(BUILD_DIR)/$(BINARY_NAME) apikey status -c config.yaml
+
 # Help
 help:
 	@echo "Available targets:"
-	@echo "  build          - Build the server binary"
-	@echo "  run            - Run the server in development mode"
+	@echo "  build          - Build the server binary to ./build/"
+	@echo "  run            - Build and run the server"
+	@echo "  dev            - Run server without building (go run)"
 	@echo "  test           - Run all tests"
 	@echo "  coverage       - Run tests with coverage report"
 	@echo "  coverage-html  - Generate HTML coverage report"
@@ -84,7 +103,7 @@ help:
 	@echo "  clean          - Remove build artifacts"
 	@echo "  help           - Show this help message"
 	@echo ""
-	@echo "API Key Management (use the built binary):"
-	@echo "  ./build/arqut-server apikey generate    - Generate new API key"
-	@echo "  ./build/arqut-server apikey rotate      - Rotate existing API key"
-	@echo "  ./build/arqut-server apikey status      - Show API key status"
+	@echo "API Key Management:"
+	@echo "  apikey-generate - Generate new API key"
+	@echo "  apikey-rotate   - Rotate existing API key"
+	@echo "  apikey-status   - Show API key status"

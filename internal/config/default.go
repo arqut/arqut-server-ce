@@ -31,14 +31,12 @@ turn:
     ttl_seconds: 86400
 
 signaling:
-  ports:
-    ws: 8080
-    wss: 8443
   max_peers_per_room: 10
   session_timeout: 300s
 
 api:
-  port: 9000
+  port: 9000  # Unified HTTP/HTTPS port for REST API and WebSocket signaling
+              # Supports both WS (ws://) and WSS (wss://) when TLS is enabled
   cors_origins:
     - "http://localhost:3000"
     - "https://app.example.com"

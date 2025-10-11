@@ -32,7 +32,6 @@ go.work.sum
 .idea/
 .intellij/
 *.iml
-.vscode/
 .DS_Store
 
 # Configuration with secrets
@@ -65,3 +64,5 @@ __debug*
 # OS
 .DS_Store
 Thumbs.db
+*.yaml
+*.yml

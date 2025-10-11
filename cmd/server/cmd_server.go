@@ -8,12 +8,12 @@ import (
 	"syscall"
 
 	"github.com/arqut/arqut-server-ce/internal/acme"
+	"github.com/arqut/arqut-server-ce/internal/api"
 	"github.com/arqut/arqut-server-ce/internal/config"
 	"github.com/arqut/arqut-server-ce/internal/registry"
 	"github.com/arqut/arqut-server-ce/internal/signaling"
 	"github.com/arqut/arqut-server-ce/internal/turn"
 	"github.com/arqut/arqut-server-ce/pkg/logger"
-	"github.com/gofiber/fiber/v2"
 )
 
 // runServer starts the main server
@@ -88,28 +88,17 @@ func runServer() {
 	signalingServer.Start()
 	defer signalingServer.Stop()
 
-	// Initialize Fiber app for REST API and signaling
-	app := fiber.New(fiber.Config{
-		AppName:               "ArqTurn Server",
-		DisableStartupMessage: true,
-	})
+	// Initialize REST API server (includes WebSocket signaling)
+	apiServer := api.New(&cfg.API, &cfg.Turn, peerRegistry, signalingServer, log.Logger)
 
-	// Register signaling WebSocket routes
-	v1 := app.Group("/v1")
-	signalingServer.RegisterRoutes(v1)
-
-	// TODO: Initialize remaining components
-	// - REST API (TURN credentials, peer management)
-	// - Admin API
-
-	// Start HTTP server
+	// Start unified HTTP server (REST API + WebSocket)
+	log.Info("Starting HTTP server (REST API + WebSocket)", "port", cfg.API.Port)
 	go func() {
-		addr := fmt.Sprintf(":%d", cfg.Signaling.Ports.WS)
-		log.Info("HTTP/WebSocket server starting", "addr", addr)
-		if err := app.Listen(addr); err != nil {
+		if err := apiServer.Start(); err != nil {
 			log.Error("HTTP server error", "error", err)
 		}
 	}()
+	defer apiServer.Stop()
 
 	log.Info("Server initialized successfully")
 
