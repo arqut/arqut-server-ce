@@ -83,8 +83,8 @@ func runServer() {
 	// Initialize peer registry
 	peerRegistry := registry.New()
 
-	// Initialize signaling server
-	signalingServer := signaling.New(&cfg.Signaling, peerRegistry, log.Logger)
+	// Initialize signaling server (with TURN config for credential generation)
+	signalingServer := signaling.New(&cfg.Signaling, &cfg.Turn, peerRegistry, log.Logger)
 	signalingServer.Start()
 	defer signalingServer.Stop()
 

@@ -2,6 +2,9 @@ package signaling
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -23,15 +26,17 @@ const (
 
 // PeerConnection represents a WebSocket connection for a peer
 type PeerConnection struct {
-	Peer   *models.Peer
-	Conn   *websocket.Conn
-	Ctx    context.Context
-	Cancel context.CancelFunc
+	Peer             *models.Peer
+	Conn             *websocket.Conn
+	Ctx              context.Context
+	Cancel           context.CancelFunc
+	ClientDataChans  map[string]chan *models.SignalingMessage // For synchronous API responses
 }
 
 // Server handles WebRTC signaling
 type Server struct {
 	config      *config.SignalingConfig
+	turnConfig  *config.TurnConfig
 	logger      *slog.Logger
 	registry    *registry.Registry
 	connections map[string]*PeerConnection
@@ -41,11 +46,12 @@ type Server struct {
 }
 
 // New creates a new signaling server
-func New(cfg *config.SignalingConfig, reg *registry.Registry, logger *slog.Logger) *Server {
+func New(cfg *config.SignalingConfig, turnCfg *config.TurnConfig, reg *registry.Registry, logger *slog.Logger) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Server{
 		config:      cfg,
+		turnConfig:  turnCfg,
 		logger:      logger.With("component", "signaling"),
 		registry:    reg,
 		connections: make(map[string]*PeerConnection),
@@ -152,6 +158,11 @@ func (s *Server) handleWebSocket() fiber.Handler {
 			Cancel: cancel,
 		}
 
+		// Initialize client data channels for edge peers (for api-connect-request responses)
+		if peerType == "edge" {
+			peerConn.ClientDataChans = make(map[string]chan *models.SignalingMessage)
+		}
+
 		// Add to registry and connections
 		s.registry.AddPeer(peer)
 		s.mu.Lock()
@@ -215,7 +226,19 @@ func (s *Server) handleMessage(from *PeerConnection, msg *models.SignalingMessag
 	case "edge:register":
 		s.handleEdgeRegistration(from, msg)
 
-	case "offer", "answer", "ice-candidate":
+	case "connect-request":
+		s.handleConnectRequest(from, msg)
+
+	case "api-connect-request":
+		s.handleAPIConnectRequest(from, msg)
+
+	case "api-connect-response":
+		s.handleAPIConnectResponse(from, msg)
+
+	case "turn-request":
+		s.handleTurnRequest(from)
+
+	case "connect-response", "offer", "answer", "ice-candidate":
 		s.forwardMessage(msg)
 
 	case "get-peers":
@@ -290,6 +313,99 @@ func (s *Server) handleGetPeers(from *PeerConnection) {
 	})
 }
 
+// handleConnectRequest handles peer-to-peer connection requests via WebSocket
+func (s *Server) handleConnectRequest(from *PeerConnection, msg *models.SignalingMessage) {
+	s.logger.Debug("Handling connect-request",
+		"from", from.Peer.ID,
+		"to", msg.To,
+	)
+
+	// Forward to target peer
+	s.forwardMessage(msg)
+}
+
+// handleAPIConnectRequest handles API-initiated connection requests from edge
+func (s *Server) handleAPIConnectRequest(from *PeerConnection, msg *models.SignalingMessage) {
+	// This should not be received from WebSocket clients - only sent TO edge via REST API
+	s.logger.Warn("Received api-connect-request from WebSocket (should come from REST API)",
+		"from", from.Peer.ID,
+	)
+}
+
+// handleAPIConnectResponse handles edge response to API connection request
+func (s *Server) handleAPIConnectResponse(from *PeerConnection, msg *models.SignalingMessage) {
+	s.logger.Debug("Handling api-connect-response",
+		"from", from.Peer.ID,
+		"to", msg.To,
+	)
+
+	// Check if there's a waiting channel for this client
+	if ch, exists := from.ClientDataChans[msg.To]; exists {
+		select {
+		case ch <- msg:
+			s.logger.Debug("Sent response to waiting REST API request", "client_id", msg.To)
+		case <-time.After(1 * time.Second):
+			s.logger.Warn("Timeout sending response to REST API channel", "client_id", msg.To)
+		}
+	} else {
+		s.logger.Warn("No waiting channel for api-connect-response", "client_id", msg.To)
+	}
+}
+
+// handleTurnRequest sends TURN credentials via WebSocket
+func (s *Server) handleTurnRequest(from *PeerConnection) {
+	s.logger.Debug("Handling turn-request", "peer", from.Peer.ID)
+
+	if s.turnConfig == nil {
+		s.sendError(from.Conn, "TURN configuration not available")
+		return
+	}
+
+	// Generate TURN credentials
+	username, password, expiry := s.generateTURNCredentials(
+		from.Peer.Type,
+		from.Peer.ID,
+		s.turnConfig.Auth.TTLSeconds,
+	)
+
+	// Build TURN server URLs
+	urls := []string{
+		fmt.Sprintf("stun:%s:3478", s.turnConfig.PublicIP),
+		fmt.Sprintf("turn:%s:3478?transport=udp", s.turnConfig.PublicIP),
+		fmt.Sprintf("turn:%s:3478?transport=tcp", s.turnConfig.PublicIP),
+	}
+
+	// Add TURNS if TLS is configured
+	if s.turnConfig.Ports.TLS > 0 {
+		urls = append(urls, fmt.Sprintf("turns:%s:%d?transport=tcp", s.turnConfig.PublicIP, s.turnConfig.Ports.TLS))
+	}
+
+	creds := models.TurnCredentials{
+		Username: username,
+		Password: password,
+		TTL:      s.turnConfig.Auth.TTLSeconds,
+		Expires:  time.Unix(expiry, 0).UTC().Format(time.RFC3339),
+		URLs:     urls,
+	}
+
+	s.sendMessage(from.Conn, &models.SignalingMessage{
+		Type: "turn-response",
+		Data: creds,
+	})
+}
+
+// generateTURNCredentials generates coturn-compatible credentials
+func (s *Server) generateTURNCredentials(peerType, peerID string, ttl int) (username, password string, expiry int64) {
+	expiry = time.Now().Unix() + int64(ttl)
+	username = fmt.Sprintf("%s:%s:%d", peerType, peerID, expiry)
+
+	mac := hmac.New(sha256.New, []byte(s.turnConfig.Auth.Secret))
+	mac.Write([]byte(username))
+	password = base64.StdEncoding.EncodeToString(mac.Sum(nil))
+
+	return username, password, expiry
+}
+
 // handleClientConnect handles REST API client connection requests
 func (s *Server) handleClientConnect() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -307,15 +423,29 @@ func (s *Server) handleClientConnect() fiber.Handler {
 		}
 
 		// Check if edge is online
-		s.mu.RLock()
+		s.mu.Lock()
 		edgeConn, exists := s.connections[req.EdgeID]
-		s.mu.RUnlock()
-
 		if !exists {
+			s.mu.Unlock()
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": fmt.Sprintf("Edge %s is not online", req.EdgeID),
 			})
 		}
+
+		// Create response channel for this client
+		responseChan := make(chan *models.SignalingMessage, 1)
+		edgeConn.ClientDataChans[req.ID] = responseChan
+		s.mu.Unlock()
+
+		// Ensure cleanup of channel
+		defer func() {
+			s.mu.Lock()
+			if edgeConn.ClientDataChans != nil {
+				close(edgeConn.ClientDataChans[req.ID])
+				delete(edgeConn.ClientDataChans, req.ID)
+			}
+			s.mu.Unlock()
+		}()
 
 		// Send connection request to edge
 		if err := s.sendMessage(edgeConn.Conn, &models.SignalingMessage{
@@ -327,9 +457,19 @@ func (s *Server) handleClientConnect() fiber.Handler {
 			})
 		}
 
-		return c.JSON(fiber.Map{
-			"status": "request sent to edge",
-		})
+		// Wait for edge response with timeout
+		select {
+		case msg := <-responseChan:
+			// Return the edge response data
+			return c.JSON(fiber.Map{
+				"status": "connected",
+				"data":   msg.Data,
+			})
+		case <-time.After(10 * time.Second):
+			return c.Status(fiber.StatusRequestTimeout).JSON(fiber.Map{
+				"error": "Timeout waiting for edge response",
+			})
+		}
 	}
 }
 
