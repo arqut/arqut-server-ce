@@ -3,6 +3,7 @@ module github.com/arqut/arqut-server-ce
 go 1.25.1
 
 require (
+	github.com/glebarez/sqlite v1.11.0
 	github.com/go-acme/lego/v4 v4.26.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.9
@@ -11,8 +12,10 @@ require (
 	github.com/knadh/koanf/v2 v2.3.0
 	github.com/pion/turn/v2 v2.1.6
 	github.com/pion/turn/v4 v4.1.1
+	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.42.0
+	gorm.io/gorm v1.31.0
 )
 
 require (
@@ -70,6 +73,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dnsimple/dnsimple-go/v4 v4.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/exoscale/egoscale/v3 v3.1.26 // indirect
 	github.com/fasthttp/websocket v1.5.8 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -78,6 +82,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-acme/alidns-20150109/v4 v4.6.0 // indirect
 	github.com/go-acme/tencentclouddnspod v1.1.10 // indirect
 	github.com/go-acme/tencentedgdeone v1.1.19 // indirect
@@ -111,6 +116,8 @@ require (
 	github.com/iij/doapi v0.0.0-20190504054126-0bbf12d6d7df // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/infobloxopen/infoblox-go-client/v2 v2.10.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12 // indirect
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
@@ -166,6 +173,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/otp v1.5.0 // indirect
 	github.com/regfish/regfish-dnsapi-go v0.1.1 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sacloud/api-client-go v0.3.3 // indirect
 	github.com/sacloud/go-http v0.1.9 // indirect
@@ -186,7 +194,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
-	github.com/spf13/cobra v1.10.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
@@ -235,4 +242,8 @@ require (
 	gopkg.in/ns1/ns1-go.v2 v2.15.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	modernc.org/libc v1.22.5 // indirect
+	modernc.org/mathutil v1.5.0 // indirect
+	modernc.org/memory v1.5.0 // indirect
+	modernc.org/sqlite v1.23.1 // indirect
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/arqut/arqut-server-ce/internal/config"
 	"github.com/arqut/arqut-server-ce/internal/registry"
 	"github.com/arqut/arqut-server-ce/internal/signaling"
+	"github.com/arqut/arqut-server-ce/internal/storage"
 	"github.com/arqut/arqut-server-ce/internal/turn"
 	"github.com/arqut/arqut-server-ce/pkg/logger"
 )
@@ -83,8 +84,29 @@ func runServer() {
 	// Initialize peer registry
 	peerRegistry := registry.New()
 
-	// Initialize signaling server (with TURN config for credential generation)
-	signalingServer := signaling.New(&cfg.Signaling, &cfg.Turn, peerRegistry, log.Logger)
+	// Initialize storage for service metadata
+	dbPath := "data/services.db"
+
+	// Ensure data directory exists
+	if err := os.MkdirAll("data", 0755); err != nil {
+		log.Error("Failed to create data directory", "error", err)
+		os.Exit(1)
+	}
+
+	store, err := storage.NewSQLiteStorage(dbPath)
+	if err != nil {
+		log.Error("Failed to initialize storage", "error", err)
+		os.Exit(1)
+	}
+	if err := store.Init(); err != nil {
+		log.Error("Failed to initialize database schema", "error", err)
+		os.Exit(1)
+	}
+	defer store.Close()
+	log.Info("Storage initialized", "path", dbPath)
+
+	// Initialize signaling server (with TURN config and storage)
+	signalingServer := signaling.New(&cfg.Signaling, &cfg.Turn, peerRegistry, store, log.Logger)
 	signalingServer.Start()
 	defer signalingServer.Stop()
 

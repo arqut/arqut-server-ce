@@ -40,7 +40,7 @@ func setupTestServer(t *testing.T) (*Server, *registry.Registry) {
 	})
 
 	reg := registry.New()
-	server := New(cfg, turnCfg, reg, log.Logger)
+	server := New(cfg, turnCfg, reg, nil, log.Logger)
 
 	return server, reg
 }
@@ -131,8 +131,8 @@ func TestGenerateTURNCredentials_DifferentSecrets(t *testing.T) {
 	log := logger.New(logger.Config{Level: "error", Format: "text"})
 	reg := registry.New()
 
-	server1 := New(cfg, turnCfg1, reg, log.Logger)
-	server2 := New(cfg, turnCfg2, reg, log.Logger)
+	server1 := New(cfg, turnCfg1, reg, nil, log.Logger)
+	server2 := New(cfg, turnCfg2, reg, nil, log.Logger)
 
 	// Generate credentials with same parameters but different secrets
 	_, password1, _ := server1.generateTURNCredentials("client", "test", 3600)
