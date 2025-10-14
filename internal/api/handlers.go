@@ -13,10 +13,10 @@ import (
 
 // Health check endpoint
 func (s *Server) handleHealth(c *fiber.Ctx) error {
-	return c.JSON(MakeResponse(fiber.Map{
+	return SuccessResp(c, fiber.Map{
 		"status": "ok",
 		"time":   time.Now().UTC().Format(time.RFC3339),
-	}, nil, ""))
+	})
 }
 
 // Generate TURN credentials
@@ -28,20 +28,17 @@ func (s *Server) handleGenerateCredentials(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			MakeResponse(nil, "Invalid request body", ""))
+		return ErrorBadRequestResp(c, "Invalid request body")
 	}
 
 	// Validate required fields
 	if req.PeerType == "" || req.PeerID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			MakeResponse(nil, "peer_type and peer_id are required", ""))
+		return ErrorBadRequestResp(c, "peer_type and peer_id are required")
 	}
 
 	// Validate peer type
 	if req.PeerType != "edge" && req.PeerType != "client" {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			MakeResponse(nil, "peer_type must be 'edge' or 'client'", ""))
+		return ErrorBadRequestResp(c, "peer_type must be 'edge' or 'client'")
 	}
 
 	// Use configured TTL if not provided
@@ -53,12 +50,12 @@ func (s *Server) handleGenerateCredentials(c *fiber.Ctx) error {
 	// Generate credentials
 	username, password, expiry := s.generateTURNCredentials(req.PeerType, req.PeerID, ttl)
 
-	return c.JSON(MakeResponse(fiber.Map{
+	return SuccessResp(c, fiber.Map{
 		"username": username,
 		"password": password,
 		"ttl":      ttl,
 		"expires":  time.Unix(expiry, 0).UTC().Format(time.RFC3339),
-	}, nil, ""))
+	})
 }
 
 // Get ICE servers configuration
@@ -68,8 +65,7 @@ func (s *Server) handleGetICEServers(c *fiber.Ctx) error {
 	peerID := c.Query("peer_id", "")
 
 	if peerID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			MakeResponse(nil, "peer_id query parameter is required", ""))
+		return ErrorBadRequestResp(c, "peer_id query parameter is required")
 	}
 
 	// Generate TURN credentials
@@ -103,10 +99,10 @@ func (s *Server) handleGetICEServers(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(MakeResponse(fiber.Map{
+	return SuccessResp(c, fiber.Map{
 		"ice_servers": iceServers,
 		"expires":     time.Unix(expiry, 0).UTC().Format(time.RFC3339),
-	}, nil, ""))
+	})
 }
 
 // List all peers
@@ -129,10 +125,10 @@ func (s *Server) handleListPeers(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(MakeResponse(fiber.Map{
+	return SuccessResp(c, fiber.Map{
 		"peers": peers,
 		"count": len(peers),
-	}, nil, ""))
+	})
 }
 
 // Get a specific peer
@@ -141,11 +137,10 @@ func (s *Server) handleGetPeer(c *fiber.Ctx) error {
 
 	peer, exists := s.registry.GetPeer(peerID)
 	if !exists {
-		return c.Status(fiber.StatusNotFound).JSON(
-			MakeResponse(nil, "Peer not found", ""))
+		return ErrorNotFoundResp(c, "Peer not found")
 	}
 
-	return c.JSON(MakeResponse(peerToMap(peer), nil, ""))
+	return SuccessResp(c, peerToMap(peer))
 }
 
 // Rotate TURN secrets (admin endpoint)
@@ -156,13 +151,11 @@ func (s *Server) handleRotateSecrets(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			MakeResponse(nil, "Invalid request body", ""))
+		return ErrorBadRequestResp(c, "Invalid request body")
 	}
 
 	if req.Secret == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			MakeResponse(nil, "secret is required", ""))
+		return ErrorBadRequestResp(c, "secret is required")
 	}
 
 	// TODO: Call TURN server's UpdateSecrets method
@@ -170,7 +163,9 @@ func (s *Server) handleRotateSecrets(c *fiber.Ctx) error {
 
 	s.logger.Info("TURN secrets rotation requested")
 
-	return c.JSON(MakeResponse(nil, nil, "Secrets rotation endpoint - to be implemented"))
+	return SuccessResp(c, fiber.Map{
+		"message": "Secrets rotation endpoint - to be implemented",
+	})
 }
 
 // Helper functions

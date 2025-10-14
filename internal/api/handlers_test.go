@@ -18,8 +18,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Helper to extract data or error from standard response
+// Helper to extract data or error from new response structure
 func getData(body map[string]interface{}) map[string]interface{} {
+	// Check success field
+	if success, ok := body["success"].(bool); ok && !success {
+		return nil
+	}
 	if data, ok := body["data"].(map[string]interface{}); ok {
 		return data
 	}
@@ -27,8 +31,11 @@ func getData(body map[string]interface{}) map[string]interface{} {
 }
 
 func getError(body map[string]interface{}) string {
-	if err, ok := body["error"].(string); ok {
-		return err
+	// New structure: error is an object with message field
+	if errObj, ok := body["error"].(map[string]interface{}); ok {
+		if msg, ok := errObj["message"].(string); ok {
+			return msg
+		}
 	}
 	return ""
 }

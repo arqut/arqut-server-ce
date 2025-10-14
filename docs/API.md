@@ -20,25 +20,117 @@ Authorization: Bearer arq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## Response Format
 
-All API responses follow a standardized format:
+All API responses follow a standardized format with `success`, structured `error`, and optional `meta` fields.
 
 ### Success Response
 ```json
 {
+  "success": true,
   "data": {
     // Response data here
   },
-  "error": null,
-  "message": ""
+  "meta": {
+    "requestId": "optional-request-id",
+    "timestamp": "2025-10-14T19:27:19Z",
+    "pagination": {
+      "page": 1,
+      "perPage": 20,
+      "total": 100,
+      "totalPages": 5
+    }
+  }
 }
 ```
 
 ### Error Response
 ```json
 {
-  "data": null,
-  "error": "Error message here",
-  "message": ""
+  "success": false,
+  "error": {
+    "code": 400,
+    "message": "Error message here",
+    "detail": "Optional additional error details"
+  },
+  "meta": {
+    "requestId": "optional-request-id",
+    "timestamp": "2025-10-14T19:27:19Z"
+  }
+}
+```
+
+### Response Structure Fields
+
+- **`success`** (boolean): Indicates if the request was successful
+- **`data`** (object, optional): Response data (present on success)
+- **`error`** (object, optional): Error details (present on failure)
+  - **`code`** (number): HTTP status code
+  - **`message`** (string): Human-readable error message
+  - **`detail`** (any, optional): Additional error context
+- **`meta`** (object, optional): Response metadata
+  - **`requestId`** (string, optional): Unique request identifier for tracking
+  - **`timestamp`** (string, optional): Response timestamp (ISO 8601)
+  - **`pagination`** (object, optional): Pagination info for list endpoints
+  - **`ordering`** (object, optional): Sort order information
+
+### Type Definitions
+
+#### TypeScript
+```typescript
+interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: ApiError;
+  meta?: ApiResponseMeta;
+}
+
+interface ApiError {
+  code?: number;
+  message?: string;
+  detail?: any;
+}
+
+interface ApiResponseMeta {
+  requestId?: string;
+  timestamp?: string;
+  pagination?: Pagination;
+  ordering?: Record<string, any>;
+}
+
+interface Pagination {
+  page: number;
+  perPage: number;
+  total: number;
+  totalPages: number;
+}
+```
+
+#### Go
+```go
+type ApiResponse struct {
+    Success bool             `json:"success"`
+    Data    interface{}      `json:"data,omitempty"`
+    Error   *ApiError        `json:"error,omitempty"`
+    Meta    *ApiResponseMeta `json:"meta,omitempty"`
+}
+
+type ApiError struct {
+    Code    int         `json:"code,omitempty"`
+    Message string      `json:"message,omitempty"`
+    Detail  interface{} `json:"detail,omitempty"`
+}
+
+type ApiResponseMeta struct {
+    RequestID  string      `json:"requestId,omitempty"`
+    Timestamp  *time.Time  `json:"timestamp,omitempty"`
+    Ordering   *Map        `json:"ordering,omitempty"`
+    Pagination *Pagination `json:"pagination,omitempty"`
+}
+
+type Pagination struct {
+    Page       int `json:"page"`
+    PerPage    int `json:"perPage"`
+    Total      int `json:"total"`
+    TotalPages int `json:"totalPages"`
 }
 ```
 
@@ -55,6 +147,7 @@ Check server health status.
 **Response**:
 ```json
 {
+  "success": true,
   "data": {
     "status": "ok",
     "time": "2025-01-11T10:30:00Z"
@@ -89,6 +182,7 @@ Generate time-limited TURN credentials for a peer.
 **Response**:
 ```json
 {
+  "success": true,
   "data": {
     "username": "edge:peer-123:1736590800",
     "password": "iNL6ufmKb1BOo0R4qVAIYFyRpAfa6Br+fKTZYeMBSUI=",
@@ -135,6 +229,7 @@ Get complete ICE server configuration including STUN/TURN servers with credentia
 **Response**:
 ```json
 {
+  "success": true,
   "data": {
     "ice_servers": [
       {
@@ -199,6 +294,7 @@ Get list of all connected peers, optionally filtered by type.
 **Response**:
 ```json
 {
+  "success": true,
   "data": {
     "peers": [
       {
@@ -261,6 +357,7 @@ Get detailed information about a specific peer.
 **Response**:
 ```json
 {
+  "success": true,
   "data": {
     "id": "edge-001",
     "type": "edge",
@@ -305,9 +402,10 @@ Update TURN authentication secrets without restarting the server.
 **Response**:
 ```json
 {
-  "data": null,
-  "error": null,
-  "message": "Secrets rotation endpoint - to be implemented"
+  "success": true,
+  "data": {
+    "message": "Secrets rotation endpoint - to be implemented"
+  }
 }
 ```
 
@@ -474,8 +572,11 @@ async function getICEServers(peerId) {
       }
     }
   );
-  const {data} = await response.json();
-  return data.ice_servers;
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error.message);
+  }
+  return result.data.ice_servers;
 }
 
 // 2. Create peer connection
@@ -521,13 +622,3 @@ pc.onicecandidate = (event) => {
   }
 };
 ```
-
-## Changelog
-
-See [CHANGELOG.md](../CHANGELOG.md) for API version history.
-
-## Support
-
-For issues and questions:
-- GitHub Issues: https://github.com/yourusername/arqut-server-ce/issues
-- Documentation: https://docs.arqut.io

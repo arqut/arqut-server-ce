@@ -127,7 +127,13 @@ func errorHandler(c *fiber.Ctx, err error) error {
 		message = e.Message
 	}
 
-	return c.Status(code).JSON(MakeResponse(nil, message, ""))
+	return c.Status(code).JSON(&ApiResponse{
+		Success: false,
+		Error: &ApiError{
+			Code:    code,
+			Message: message,
+		},
+	})
 }
 
 // Helper functions

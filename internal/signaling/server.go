@@ -27,11 +27,11 @@ const (
 
 // PeerConnection represents a WebSocket connection for a peer
 type PeerConnection struct {
-	Peer             *models.Peer
-	Conn             *websocket.Conn
-	Ctx              context.Context
-	Cancel           context.CancelFunc
-	ClientDataChans  map[string]chan *models.SignalingMessage // For synchronous API responses
+	Peer            *models.Peer
+	Conn            *websocket.Conn
+	Ctx             context.Context
+	Cancel          context.CancelFunc
+	ClientDataChans map[string]chan *models.SignalingMessage // For synchronous API responses
 }
 
 // Server handles WebRTC signaling
@@ -175,7 +175,6 @@ func (s *Server) handleWebSocket() fiber.Handler {
 		s.logger.Info("Peer connected",
 			"id", id,
 			"type", peerType,
-			"edge_id", edgeID,
 		)
 
 		// Start connection monitoring
