@@ -19,16 +19,26 @@ import (
 )
 
 const (
-	writeWait      = 10 * time.Second
-	readWait       = 60 * time.Second
-	pingInterval   = 30 * time.Second
-	maxMessageSize = 512 * 1024 // 512 KB
+	writeWait          = 10 * time.Second
+	readWait           = 60 * time.Second
+	pingInterval       = 30 * time.Second
+	maxMessageSize     = 512 * 1024 // 512 KB
+	maxBatchSize       = 1000        // Maximum services in batch sync
+	channelSendTimeout = 1 * time.Second
 )
+
+// WebSocketConn interface for testability
+type WebSocketConn interface {
+	WriteJSON(v interface{}) error
+	WriteMessage(messageType int, data []byte) error
+	Close() error
+	SetWriteDeadline(t time.Time) error
+}
 
 // PeerConnection represents a WebSocket connection for a peer
 type PeerConnection struct {
 	Peer            *models.Peer
-	Conn            *websocket.Conn
+	Conn            WebSocketConn
 	Ctx             context.Context
 	Cancel          context.CancelFunc
 	ClientDataChans map[string]chan *models.SignalingMessage // For synchronous API responses
@@ -169,6 +179,19 @@ func (s *Server) handleWebSocket() fiber.Handler {
 		// Add to registry and connections
 		s.registry.AddPeer(peer)
 		s.mu.Lock()
+		// Check for existing connection and close it first
+		if oldConn, exists := s.connections[id]; exists {
+			s.logger.Warn("Duplicate connection detected, closing old connection",
+				"id", id,
+				"type", peerType,
+			)
+			if oldConn.Cancel != nil {
+				oldConn.Cancel()
+			}
+			if oldConn.Conn != nil {
+				oldConn.Conn.Close()
+			}
+		}
 		s.connections[id] = peerConn
 		s.mu.Unlock()
 
@@ -275,8 +298,16 @@ func (s *Server) handleEdgeRegistration(from *PeerConnection, msg *models.Signal
 		return
 	}
 
-	// Update peer info
-	from.Peer.ID = edgeID
+	// Validate that the edge ID matches the connection ID
+	// We no longer support dynamic ID updates to avoid registry inconsistencies
+	if from.Peer.ID != edgeID {
+		s.logger.Warn("Edge ID mismatch during registration",
+			"connection_id", from.Peer.ID,
+			"requested_id", edgeID,
+		)
+		s.sendError(from.Conn, "Edge ID must match connection ID")
+		return
+	}
 
 	s.logger.Info("Edge registered", "edge_id", edgeID)
 
@@ -355,8 +386,10 @@ func (s *Server) handleAPIConnectResponse(from *PeerConnection, msg *models.Sign
 		select {
 		case ch <- msg:
 			s.logger.Debug("Sent response to waiting REST API request", "client_id", msg.To)
-		case <-time.After(1 * time.Second):
-			s.logger.Warn("Timeout sending response to REST API channel", "client_id", msg.To)
+		case <-time.After(channelSendTimeout):
+			s.logger.Error("Timeout sending response to REST API channel - this indicates a bug",
+				"client_id", msg.To,
+				"timeout", channelSendTimeout)
 		}
 	} else {
 		s.logger.Warn("No waiting channel for api-connect-response", "client_id", msg.To)
@@ -433,13 +466,21 @@ func (s *Server) handleClientConnect() fiber.Handler {
 			})
 		}
 
-		// Check if edge is online
+		// Check if edge is online and setup response channel atomically
 		s.mu.Lock()
 		edgeConn, exists := s.connections[req.EdgeID]
 		if !exists {
 			s.mu.Unlock()
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": fmt.Sprintf("Edge %s is not online", req.EdgeID),
+			})
+		}
+
+		// Verify ClientDataChans is initialized (should be for edge peers)
+		if edgeConn.ClientDataChans == nil {
+			s.mu.Unlock()
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Edge connection not properly initialized",
 			})
 		}
 
@@ -486,13 +527,13 @@ func (s *Server) handleClientConnect() fiber.Handler {
 }
 
 // sendMessage sends a message to a WebSocket connection
-func (s *Server) sendMessage(conn *websocket.Conn, msg *models.SignalingMessage) error {
+func (s *Server) sendMessage(conn WebSocketConn, msg *models.SignalingMessage) error {
 	conn.SetWriteDeadline(time.Now().Add(writeWait))
 	return conn.WriteJSON(msg)
 }
 
 // sendError sends an error message to a WebSocket connection
-func (s *Server) sendError(conn *websocket.Conn, errMsg string) {
+func (s *Server) sendError(conn WebSocketConn, errMsg string) {
 	s.sendMessage(conn, &models.SignalingMessage{
 		Type: "error",
 		Data: fiber.Map{"error": errMsg},

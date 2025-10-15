@@ -123,6 +123,16 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 		return
 	}
 
+	// Validate batch size to prevent abuse
+	if len(servicesData) > maxBatchSize {
+		s.logger.Warn("Batch size exceeds limit",
+			"edge", from.Peer.ID,
+			"count", len(servicesData),
+			"max", maxBatchSize)
+		s.sendError(from.Conn, fmt.Sprintf("Batch size exceeds maximum of %d services", maxBatchSize))
+		return
+	}
+
 	s.logger.Info("Processing batch sync", "edge", from.Peer.ID, "count", len(servicesData))
 
 	// Process each service (upsert pattern)
