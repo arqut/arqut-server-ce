@@ -7,7 +7,7 @@ import (
 	"github.com/arqut/arqut-server-ce/pkg/models"
 )
 
-var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
 
 // validateService validates service data
 func validateService(service *models.ServiceData) error {

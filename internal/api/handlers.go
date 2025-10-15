@@ -109,26 +109,26 @@ func (s *Server) handleGetICEServers(c *fiber.Ctx) error {
 func (s *Server) handleListPeers(c *fiber.Ctx) error {
 	peerType := c.Query("type", "") // Optional filter by type
 
-	var peers []fiber.Map
+	var peers []*models.Peer
 
 	if peerType != "" {
 		// Filter by type
-		filteredPeers := s.registry.GetPeersByType(peerType)
-		for _, peer := range filteredPeers {
-			peers = append(peers, peerToMap(peer))
-		}
+		peers = s.registry.GetPeersByType(peerType)
 	} else {
 		// Get all peers
-		allPeers := s.registry.GetAllPeers()
-		for _, peer := range allPeers {
-			peers = append(peers, peerToMap(peer))
-		}
+		peers = s.registry.GetAllPeers()
 	}
 
-	return SuccessResp(c, fiber.Map{
-		"peers": peers,
-		"count": len(peers),
-	})
+	return SuccessResp(c, peers)
+}
+
+func (s *Server) handleListServices(c *fiber.Ctx) error {
+	services, err := s.storage.ListAllServices()
+	if err != nil {
+		return ErrorInternalServerErrorResp(c, "Failed to list services")
+	}
+
+	return SuccessResp(c, services)
 }
 
 // Get a specific peer

@@ -473,12 +473,13 @@ func (s *Server) handleClientConnect() fiber.Handler {
 		case msg := <-responseChan:
 			// Return the edge response data
 			return c.JSON(fiber.Map{
-				"status": "connected",
-				"data":   msg.Data,
+				"success": true,
+				"data":    msg.Data,
 			})
 		case <-time.After(10 * time.Second):
 			return c.Status(fiber.StatusRequestTimeout).JSON(fiber.Map{
-				"error": "Timeout waiting for edge response",
+				"success": false,
+				"error":   "Timeout waiting for edge response",
 			})
 		}
 	}

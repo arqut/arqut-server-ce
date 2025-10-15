@@ -137,3 +137,14 @@ func (s *SQLiteStorage) ListAllActiveServices() ([]*models.EdgeService, error) {
 
 	return services, nil
 }
+
+// ListAllServices lists all services regardless of status
+func (s *SQLiteStorage) ListAllServices() ([]*models.EdgeService, error) {
+	var services []*models.EdgeService
+	result := s.db.Order("edge_id, created_at DESC").Find(&services)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to list services: %w", result.Error)
+	}
+
+	return services, nil
+}

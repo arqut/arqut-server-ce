@@ -8,6 +8,7 @@ import (
 	"github.com/arqut/arqut-server-ce/internal/middleware"
 	"github.com/arqut/arqut-server-ce/internal/registry"
 	"github.com/arqut/arqut-server-ce/internal/signaling"
+	"github.com/arqut/arqut-server-ce/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -25,12 +26,13 @@ type Server struct {
 	cfg       *config.APIConfig
 	turnCfg   *config.TurnConfig
 	registry  *registry.Registry
+	storage   storage.Storage
 	signaling SignalingServer
 	logger    *slog.Logger
 }
 
 // New creates a new API server
-func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Registry, sig *signaling.Server, log *slog.Logger) *Server {
+func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Registry, storage storage.Storage, sig *signaling.Server, log *slog.Logger) *Server {
 	app := fiber.New(fiber.Config{
 		AppName:               "ArqTurn REST API",
 		DisableStartupMessage: true,
@@ -57,6 +59,7 @@ func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Regist
 		cfg:       cfg,
 		turnCfg:   turnCfg,
 		registry:  reg,
+		storage:   storage,
 		signaling: sig,
 		logger:    log,
 	}
@@ -86,6 +89,9 @@ func (s *Server) setupRoutes() {
 		// Peer management
 		protected.Get("/peers", s.handleListPeers)
 		protected.Get("/peers/:id", s.handleGetPeer)
+
+		// Service management
+		protected.Get("/services", s.handleListServices)
 	}
 
 	// Admin endpoints (require API key)

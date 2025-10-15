@@ -78,7 +78,7 @@ func setupTestServer(t *testing.T) (*Server, string) {
 	})
 
 	// Pass nil for signaling server in tests (not needed for API tests)
-	server := New(cfg, turnCfg, reg, nil, log.Logger)
+	server := New(cfg, turnCfg, reg, nil, nil, log.Logger)
 
 	return server, key
 }

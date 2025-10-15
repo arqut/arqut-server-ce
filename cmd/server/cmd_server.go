@@ -88,7 +88,7 @@ func runServer() {
 	dbPath := "data/services.db"
 
 	// Ensure data directory exists
-	if err := os.MkdirAll("data", 0755); err != nil {
+	if err := os.MkdirAll("data", 0o755); err != nil {
 		log.Error("Failed to create data directory", "error", err)
 		os.Exit(1)
 	}
@@ -111,7 +111,7 @@ func runServer() {
 	defer signalingServer.Stop()
 
 	// Initialize REST API server (includes WebSocket signaling)
-	apiServer := api.New(&cfg.API, &cfg.Turn, peerRegistry, signalingServer, log.Logger)
+	apiServer := api.New(&cfg.API, &cfg.Turn, peerRegistry, store, signalingServer, log.Logger)
 
 	// Start unified HTTP server (REST API + WebSocket)
 	log.Info("Starting HTTP server (REST API + WebSocket)", "port", cfg.API.Port)

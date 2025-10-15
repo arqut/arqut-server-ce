@@ -16,5 +16,6 @@ type Storage interface {
 	DeleteEdgeService(edgeID, localID string) error
 	GetEdgeServiceByLocalID(edgeID, localID string) (*models.EdgeService, error)
 	ListEdgeServices(edgeID string) ([]*models.EdgeService, error)
+	ListAllServices() ([]*models.EdgeService, error)
 	ListAllActiveServices() ([]*models.EdgeService, error)
 }
