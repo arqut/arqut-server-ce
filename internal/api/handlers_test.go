@@ -30,6 +30,18 @@ func getData(body map[string]interface{}) map[string]interface{} {
 	return nil
 }
 
+// Helper to extract array data from response
+func getDataArray(body map[string]interface{}) []interface{} {
+	// Check success field
+	if success, ok := body["success"].(bool); ok && !success {
+		return nil
+	}
+	if data, ok := body["data"].([]interface{}); ok {
+		return data
+	}
+	return nil
+}
+
 func getError(body map[string]interface{}) string {
 	// New structure: error is an object with message field
 	if errObj, ok := body["error"].(map[string]interface{}); ok {
@@ -378,10 +390,8 @@ func TestListPeers(t *testing.T) {
 			useAuth:        true,
 			expectedStatus: 200,
 			checkResponse: func(t *testing.T, body map[string]interface{}) {
-				data := getData(body)
-				assert.NotNil(t, data)
-				peers := data["peers"].([]interface{})
-				assert.Equal(t, float64(2), data["count"])
+				peers := getDataArray(body)
+				assert.NotNil(t, peers)
 				assert.Len(t, peers, 2)
 			},
 		},
@@ -391,10 +401,8 @@ func TestListPeers(t *testing.T) {
 			useAuth:        true,
 			expectedStatus: 200,
 			checkResponse: func(t *testing.T, body map[string]interface{}) {
-				data := getData(body)
-				assert.NotNil(t, data)
-				peers := data["peers"].([]interface{})
-				assert.Equal(t, float64(1), data["count"])
+				peers := getDataArray(body)
+				assert.NotNil(t, peers)
 				assert.Len(t, peers, 1)
 
 				peer := peers[0].(map[string]interface{})
@@ -407,10 +415,9 @@ func TestListPeers(t *testing.T) {
 			useAuth:        true,
 			expectedStatus: 200,
 			checkResponse: func(t *testing.T, body map[string]interface{}) {
-				data := getData(body)
-				assert.NotNil(t, data)
-				peers := data["peers"].([]interface{})
-				assert.Equal(t, float64(1), data["count"])
+				peers := getDataArray(body)
+				assert.NotNil(t, peers)
+				assert.Len(t, peers, 1)
 
 				peer := peers[0].(map[string]interface{})
 				assert.Equal(t, "client", peer["type"])

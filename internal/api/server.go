@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/arqut/arqut-server-ce/internal/config"
 	"github.com/arqut/arqut-server-ce/internal/middleware"
@@ -42,7 +43,13 @@ func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Regist
 	// Global middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
-		Format: "[${time}] ${status} - ${method} ${path} ${latency}\n",
+		Format: "${time} ARQUT-SERVER-CE [INFO] [API] ${status} ${method} ${path} ${latency}\n",
+		TimeFormat: "2006/01/02 15:04:05",
+		CustomTags: map[string]logger.LogFunc{
+			"time": func(output logger.Buffer, c *fiber.Ctx, data *logger.Data, extraParam string) (int, error) {
+				return output.WriteString(time.Now().Format("2006/01/02 15:04:05"))
+			},
+		},
 	}))
 
 	// CORS middleware
