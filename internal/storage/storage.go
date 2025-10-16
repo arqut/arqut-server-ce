@@ -13,9 +13,9 @@ type Storage interface {
 	// Service metadata management
 	CreateEdgeService(service *models.EdgeService) error
 	UpdateEdgeService(service *models.EdgeService) error
-	DeleteEdgeService(edgeID, localID string) error
-	GetEdgeServiceByLocalID(edgeID, localID string) (*models.EdgeService, error)
+	DeleteEdgeService(id string) error
+	GetEdgeService(id string) (*models.EdgeService, error)
 	ListEdgeServices(edgeID string) ([]*models.EdgeService, error)
 	ListAllServices() ([]*models.EdgeService, error)
-	ListAllActiveServices() ([]*models.EdgeService, error)
+	ListAllEnabledServices() ([]*models.EdgeService, error)
 }

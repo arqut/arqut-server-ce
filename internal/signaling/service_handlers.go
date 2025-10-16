@@ -37,18 +37,21 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 		return
 	}
 
-	// Convert to ServiceData
-	service, err := s.parseServiceData(serviceData)
+	// Convert to EdgeService
+	service, err := s.parseEdgeService(serviceData)
 	if err != nil {
 		s.logger.Error("Failed to parse service data", "edge", from.Peer.ID, "operation", operation, "error", err)
 		s.sendServiceSyncAck(from, "", "", "error", fmt.Sprintf("Failed to parse service: %v", err))
 		return
 	}
 
+	// Set EdgeID from peer connection
+	service.EdgeID = from.Peer.ID
+
 	s.logger.Info("Processing service sync",
 		"edge", from.Peer.ID,
 		"operation", operation,
-		"local_id", service.LocalID,
+		"service_id", service.ID,
 		"name", service.Name,
 		"tunnel_port", service.TunnelPort)
 
@@ -56,25 +59,23 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 	if err := validateService(service); err != nil {
 		s.logger.Warn("Service validation failed",
 			"edge", from.Peer.ID,
-			"local_id", service.LocalID,
+			"service_id", service.ID,
 			"error", err)
-		s.sendServiceSyncAck(from, service.LocalID, "", "error", err.Error())
+		s.sendServiceSyncAck(from, service.ID, service.ID, "error", err.Error())
 		return
 	}
 
 	// Process based on operation
-	var serverID string
-
 	switch operation {
 	case "created":
-		serverID, err = s.createService(from.Peer.ID, service)
+		err = s.createService(service)
 	case "updated":
-		serverID, err = s.updateService(from.Peer.ID, service)
+		err = s.updateService(service)
 	case "deleted":
-		err = s.deleteService(from.Peer.ID, service.LocalID)
+		err = s.deleteService(service.ID)
 	default:
 		s.logger.Warn("Invalid service sync operation", "edge", from.Peer.ID, "operation", operation)
-		s.sendServiceSyncAck(from, service.LocalID, "", "error", "invalid operation")
+		s.sendServiceSyncAck(from, service.ID, "", "error", "invalid operation")
 		return
 	}
 
@@ -82,20 +83,19 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 		s.logger.Error("Service sync operation failed",
 			"edge", from.Peer.ID,
 			"operation", operation,
-			"local_id", service.LocalID,
+			"service_id", service.ID,
 			"error", err)
-		s.sendServiceSyncAck(from, service.LocalID, "", "error", err.Error())
+		s.sendServiceSyncAck(from, service.ID, "", "error", err.Error())
 		return
 	}
 
 	s.logger.Info("Service sync completed successfully",
 		"edge", from.Peer.ID,
 		"operation", operation,
-		"local_id", service.LocalID,
-		"server_id", serverID)
+		"service_id", service.ID)
 
 	// Send success acknowledgment
-	s.sendServiceSyncAck(from, service.LocalID, serverID, "success", "")
+	s.sendServiceSyncAck(from, service.ID, service.ID, "success", "")
 }
 
 // handleServiceSyncBatch processes bulk sync on reconnection
@@ -151,7 +151,7 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 			continue
 		}
 
-		service, err := s.parseServiceData(svcMap)
+		service, err := s.parseEdgeService(svcMap)
 		if err != nil {
 			s.logger.Warn("Failed to parse service in batch",
 				"edge", from.Peer.ID,
@@ -161,35 +161,38 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 			continue
 		}
 
+		// Set EdgeID from peer connection
+		service.EdgeID = from.Peer.ID
+
 		s.logger.Debug("Validating batch service",
 			"edge", from.Peer.ID,
 			"index", i,
-			"local_id", service.LocalID,
+			"service_id", service.ID,
 			"name", service.Name)
 
 		if err := validateService(service); err != nil {
 			s.logger.Warn("Invalid service in batch",
 				"edge", from.Peer.ID,
 				"index", i,
-				"local_id", service.LocalID,
+				"service_id", service.ID,
 				"error", err)
 			failedCount++
 			continue
 		}
 
 		// Try to update first, create if not exists
-		_, err = s.updateService(from.Peer.ID, service)
+		err = s.updateService(service)
 		if err != nil {
 			// Service doesn't exist, create it
 			s.logger.Debug("Service not found, creating new",
 				"edge", from.Peer.ID,
-				"local_id", service.LocalID)
-			_, err = s.createService(from.Peer.ID, service)
+				"service_id", service.ID)
+			err = s.createService(service)
 			if err != nil {
 				s.logger.Warn("Failed to sync service",
 					"edge", from.Peer.ID,
 					"index", i,
-					"local_id", service.LocalID,
+					"service_id", service.ID,
 					"error", err)
 				failedCount++
 				continue
@@ -223,24 +226,16 @@ func (s *Server) handleServiceListRequest(from *PeerConnection, msg *models.Sign
 		return
 	}
 
-	// Convert to ServiceData format
-	serviceData := make([]models.ServiceData, len(services))
+	// Convert pointers to values for JSON serialization
+	serviceList := make([]models.EdgeService, len(services))
 	for i, svc := range services {
-		serviceData[i] = models.ServiceData{
-			LocalID:    svc.LocalID,
-			Name:       svc.Name,
-			TunnelPort: svc.TunnelPort,
-			LocalHost:  svc.LocalHost,
-			LocalPort:  svc.LocalPort,
-			Protocol:   svc.Protocol,
-			Status:     svc.Status,
-		}
+		serviceList[i] = *svc
 	}
 
 	s.sendMessage(from.Conn, &models.SignalingMessage{
 		Type: MessageTypeServiceListResponse,
 		Data: map[string]interface{}{
-			"services": serviceData,
+			"services": serviceList,
 		},
 	})
 
@@ -249,71 +244,61 @@ func (s *Server) handleServiceListRequest(from *PeerConnection, msg *models.Sign
 
 // Helper functions
 
-func (s *Server) createService(edgeID string, service *models.ServiceData) (string, error) {
-	serverID, err := generateServiceID()
-	if err != nil {
-		return "", fmt.Errorf("failed to generate service ID: %w", err)
-	}
+func (s *Server) createService(service *models.EdgeService) error {
+	// Set timestamps
+	service.CreatedAt = time.Now()
+	service.UpdatedAt = time.Now()
 
-	edgeService := &models.EdgeService{
-		ID:         serverID,
-		EdgeID:     edgeID,
-		LocalID:    service.LocalID,
-		Name:       service.Name,
-		TunnelPort: service.TunnelPort,
-		LocalHost:  service.LocalHost,
-		LocalPort:  service.LocalPort,
-		Protocol:   service.Protocol,
-		Status:     service.Status,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	}
-
-	if err := s.storage.CreateEdgeService(edgeService); err != nil {
-		return "", fmt.Errorf("failed to create service: %w", err)
+	if err := s.storage.CreateEdgeService(service); err != nil {
+		return fmt.Errorf("failed to create service: %w", err)
 	}
 
 	s.logger.Info("Service created",
-		"edge", edgeID,
-		"local_id", service.LocalID,
-		"server_id", serverID,
+		"edge", service.EdgeID,
+		"service_id", service.ID,
 		"name", service.Name)
 
-	return serverID, nil
+	return nil
 }
 
-func (s *Server) updateService(edgeID string, service *models.ServiceData) (string, error) {
-	existing, err := s.storage.GetEdgeServiceByLocalID(edgeID, service.LocalID)
+func (s *Server) updateService(service *models.EdgeService) error {
+	existing, err := s.storage.GetEdgeService(service.ID)
 	if err != nil {
-		return "", fmt.Errorf("service not found: %w", err)
+		return fmt.Errorf("service not found: %w", err)
 	}
 
+	// Verify edge ownership
+	if existing.EdgeID != service.EdgeID {
+		return fmt.Errorf("service belongs to different edge")
+	}
+
+	// Update fields
 	existing.Name = service.Name
 	existing.TunnelPort = service.TunnelPort
 	existing.LocalHost = service.LocalHost
 	existing.LocalPort = service.LocalPort
 	existing.Protocol = service.Protocol
-	existing.Status = service.Status
+	existing.Enabled = service.Enabled
 	existing.UpdatedAt = time.Now()
 
 	if err := s.storage.UpdateEdgeService(existing); err != nil {
-		return "", fmt.Errorf("failed to update service: %w", err)
+		return fmt.Errorf("failed to update service: %w", err)
 	}
 
 	s.logger.Info("Service updated",
-		"edge", edgeID,
-		"local_id", service.LocalID,
+		"edge", service.EdgeID,
+		"service_id", service.ID,
 		"name", service.Name)
 
-	return existing.ID, nil
+	return nil
 }
 
-func (s *Server) deleteService(edgeID string, localID string) error {
-	if err := s.storage.DeleteEdgeService(edgeID, localID); err != nil {
+func (s *Server) deleteService(id string) error {
+	if err := s.storage.DeleteEdgeService(id); err != nil {
 		return fmt.Errorf("failed to delete service: %w", err)
 	}
 
-	s.logger.Info("Service deleted", "edge", edgeID, "local_id", localID)
+	s.logger.Info("Service deleted", "service_id", id)
 	return nil
 }
 
@@ -329,14 +314,14 @@ func (s *Server) sendServiceSyncAck(peer *PeerConnection, localID, serverID, sta
 	})
 }
 
-func (s *Server) parseServiceData(data map[string]interface{}) (*models.ServiceData, error) {
+func (s *Server) parseEdgeService(data map[string]interface{}) (*models.EdgeService, error) {
 	// Marshal and unmarshal to convert map to struct
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal service data: %w", err)
 	}
 
-	var service models.ServiceData
+	var service models.EdgeService
 	if err := json.Unmarshal(jsonData, &service); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal service data: %w", err)
 	}

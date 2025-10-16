@@ -10,21 +10,29 @@ import (
 var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
 
 // validateService validates service data
-func validateService(service *models.ServiceData) error {
-	// Name: non-empty, max 255 chars, alphanumeric + hyphens/underscores
+func validateService(service *models.EdgeService) error {
+	// ID: required, max 8 chars
+	if service.ID == "" {
+		return fmt.Errorf("service ID is required")
+	}
+	if len(service.ID) > 8 {
+		return fmt.Errorf("service ID too long (max 8 characters)")
+	}
+
+	// EdgeID: required
+	if service.EdgeID == "" {
+		return fmt.Errorf("edge ID is required")
+	}
+
+	// Name: non-empty, max 128 chars, alphanumeric + hyphens/underscores/spaces
 	if service.Name == "" {
 		return fmt.Errorf("service name is required")
 	}
-	if len(service.Name) > 255 {
-		return fmt.Errorf("service name too long (max 255 characters)")
+	if len(service.Name) > 128 {
+		return fmt.Errorf("service name too long (max 128 characters)")
 	}
 	if !nameRegex.MatchString(service.Name) {
-		return fmt.Errorf("service name must contain only alphanumeric, hyphens, and underscores")
-	}
-
-	// LocalID: non-empty
-	if service.LocalID == "" {
-		return fmt.Errorf("local ID is required")
+		return fmt.Errorf("service name must contain only alphanumeric, hyphens, underscores, and spaces")
 	}
 
 	// LocalHost: non-empty
@@ -49,16 +57,6 @@ func validateService(service *models.ServiceData) error {
 	}
 	if !validProtocols[service.Protocol] {
 		return fmt.Errorf("invalid protocol: %s (must be http or websocket)", service.Protocol)
-	}
-
-	// Status: active|inactive
-	if service.Status != "" && service.Status != "active" && service.Status != "inactive" {
-		return fmt.Errorf("invalid status: %s (must be active or inactive)", service.Status)
-	}
-
-	// Default to active if not specified
-	if service.Status == "" {
-		service.Status = "active"
 	}
 
 	return nil

@@ -34,20 +34,12 @@ func (s *SQLiteStorage) Init() error {
 		return fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	// Create unique index on edge_id + local_id
+	// Create index on enabled status
 	if err := s.db.Exec(`
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_edge_services_edge_local
-		ON edge_services(edge_id, local_id)
+		CREATE INDEX IF NOT EXISTS idx_edge_services_enabled
+		ON edge_services(enabled)
 	`).Error; err != nil {
-		return fmt.Errorf("failed to create unique index: %w", err)
-	}
-
-	// Create index on status
-	if err := s.db.Exec(`
-		CREATE INDEX IF NOT EXISTS idx_edge_services_status
-		ON edge_services(status)
-	`).Error; err != nil {
-		return fmt.Errorf("failed to create status index: %w", err)
+		return fmt.Errorf("failed to create enabled index: %w", err)
 	}
 
 	return nil
@@ -78,11 +70,9 @@ func (s *SQLiteStorage) UpdateEdgeService(service *models.EdgeService) error {
 	return nil
 }
 
-// DeleteEdgeService marks a service as deleted
-func (s *SQLiteStorage) DeleteEdgeService(edgeID, localID string) error {
-	result := s.db.Model(&models.EdgeService{}).
-		Where("edge_id = ? AND local_id = ?", edgeID, localID).
-		Update("status", "deleted")
+// DeleteEdgeService deletes a service by ID
+func (s *SQLiteStorage) DeleteEdgeService(id string) error {
+	result := s.db.Delete(&models.EdgeService{}, "id = ?", id)
 
 	if result.Error != nil {
 		return fmt.Errorf("failed to delete service: %w", result.Error)
@@ -95,10 +85,10 @@ func (s *SQLiteStorage) DeleteEdgeService(edgeID, localID string) error {
 	return nil
 }
 
-// GetEdgeServiceByLocalID retrieves a service by edge ID and local ID
-func (s *SQLiteStorage) GetEdgeServiceByLocalID(edgeID, localID string) (*models.EdgeService, error) {
+// GetEdgeService retrieves a service by ID
+func (s *SQLiteStorage) GetEdgeService(id string) (*models.EdgeService, error) {
 	var service models.EdgeService
-	result := s.db.Where("edge_id = ? AND local_id = ?", edgeID, localID).First(&service)
+	result := s.db.Where("id = ?", id).First(&service)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -113,7 +103,7 @@ func (s *SQLiteStorage) GetEdgeServiceByLocalID(edgeID, localID string) (*models
 // ListEdgeServices lists all services for a specific edge
 func (s *SQLiteStorage) ListEdgeServices(edgeID string) ([]*models.EdgeService, error) {
 	var services []*models.EdgeService
-	result := s.db.Where("edge_id = ? AND status != ?", edgeID, "deleted").
+	result := s.db.Where("edge_id = ?", edgeID).
 		Order("created_at DESC").
 		Find(&services)
 
@@ -124,15 +114,15 @@ func (s *SQLiteStorage) ListEdgeServices(edgeID string) ([]*models.EdgeService, 
 	return services, nil
 }
 
-// ListAllActiveServices lists all active services across all edges
-func (s *SQLiteStorage) ListAllActiveServices() ([]*models.EdgeService, error) {
+// ListAllEnabledServices lists all enabled services across all edges
+func (s *SQLiteStorage) ListAllEnabledServices() ([]*models.EdgeService, error) {
 	var services []*models.EdgeService
-	result := s.db.Where("status = ?", "active").
+	result := s.db.Where("enabled = ?", true).
 		Order("edge_id, created_at DESC").
 		Find(&services)
 
 	if result.Error != nil {
-		return nil, fmt.Errorf("failed to list active services: %w", result.Error)
+		return nil, fmt.Errorf("failed to list enabled services: %w", result.Error)
 	}
 
 	return services, nil

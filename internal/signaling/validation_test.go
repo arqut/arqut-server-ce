@@ -10,40 +10,43 @@ import (
 func TestValidateService(t *testing.T) {
 	tests := []struct {
 		name        string
-		service     *models.ServiceData
+		service     *models.EdgeService
 		expectError bool
 		errorMsg    string
 	}{
 		{
 			name: "valid service",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
 				LocalPort:  3000,
 				Protocol:   "http",
-				Status:     "active",
+				Enabled:    true,
 			},
 			expectError: false,
 		},
 		{
 			name: "valid service with underscores and hyphens",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-456",
+				EdgeID:     "edge-1",
 				Name:       "my_web-service_123",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
 				LocalPort:  3000,
 				Protocol:   "websocket",
-				Status:     "inactive",
+				Enabled:    false,
 			},
 			expectError: false,
 		},
 		{
 			name: "empty name",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
@@ -55,8 +58,9 @@ func TestValidateService(t *testing.T) {
 		},
 		{
 			name: "name too long",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       string(make([]byte, 256)),
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
@@ -68,8 +72,9 @@ func TestValidateService(t *testing.T) {
 		},
 		{
 			name: "invalid name characters",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my service!",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
@@ -80,9 +85,10 @@ func TestValidateService(t *testing.T) {
 			errorMsg:    "service name must contain only alphanumeric",
 		},
 		{
-			name: "empty local ID",
-			service: &models.ServiceData{
-				LocalID:    "",
+			name: "empty ID",
+			service: &models.EdgeService{
+				ID:         "",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
@@ -90,12 +96,27 @@ func TestValidateService(t *testing.T) {
 				Protocol:   "http",
 			},
 			expectError: true,
-			errorMsg:    "local ID is required",
+			errorMsg:    "service ID is required",
+		},
+		{
+			name: "empty edge ID",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "",
+				Name:       "my-service",
+				TunnelPort: 8080,
+				LocalHost:  "localhost",
+				LocalPort:  3000,
+				Protocol:   "http",
+			},
+			expectError: true,
+			errorMsg:    "edge ID is required",
 		},
 		{
 			name: "empty local host",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 8080,
 				LocalHost:  "",
@@ -107,8 +128,9 @@ func TestValidateService(t *testing.T) {
 		},
 		{
 			name: "invalid tunnel port - too low",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 0,
 				LocalHost:  "localhost",
@@ -120,8 +142,9 @@ func TestValidateService(t *testing.T) {
 		},
 		{
 			name: "invalid tunnel port - too high",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 65536,
 				LocalHost:  "localhost",
@@ -133,8 +156,9 @@ func TestValidateService(t *testing.T) {
 		},
 		{
 			name: "invalid local port",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
@@ -146,8 +170,9 @@ func TestValidateService(t *testing.T) {
 		},
 		{
 			name: "invalid protocol",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			service: &models.EdgeService{
+				ID:         "svc-123",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
@@ -158,31 +183,18 @@ func TestValidateService(t *testing.T) {
 			errorMsg:    "invalid protocol",
 		},
 		{
-			name: "invalid status",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
+			name: "ID too long",
+			service: &models.EdgeService{
+				ID:         "svc-12345",
+				EdgeID:     "edge-1",
 				Name:       "my-service",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
 				LocalPort:  3000,
 				Protocol:   "http",
-				Status:     "pending",
 			},
 			expectError: true,
-			errorMsg:    "invalid status",
-		},
-		{
-			name: "empty status defaults to active",
-			service: &models.ServiceData{
-				LocalID:    "test-123",
-				Name:       "my-service",
-				TunnelPort: 8080,
-				LocalHost:  "localhost",
-				LocalPort:  3000,
-				Protocol:   "http",
-				Status:     "",
-			},
-			expectError: false,
+			errorMsg:    "service ID too long",
 		},
 	}
 
@@ -197,10 +209,6 @@ func TestValidateService(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
-				// Check that empty status was set to active
-				if tt.service.Status == "" {
-					assert.Equal(t, "active", tt.service.Status)
-				}
 			}
 		})
 	}

@@ -32,15 +32,14 @@ func TestCreateEdgeService(t *testing.T) {
 	defer cleanup()
 
 	service := &models.EdgeService{
-		ID:         "server-123",
+		ID:         "svc-123",
 		EdgeID:     "edge-1",
-		LocalID:    "local-123",
 		Name:       "test-service",
 		TunnelPort: 8080,
 		LocalHost:  "localhost",
 		LocalPort:  3000,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -49,26 +48,25 @@ func TestCreateEdgeService(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify it was created
-	retrieved, err := storage.GetEdgeServiceByLocalID("edge-1", "local-123")
+	retrieved, err := storage.GetEdgeService("svc-123")
 	assert.NoError(t, err)
 	assert.Equal(t, service.ID, retrieved.ID)
 	assert.Equal(t, service.Name, retrieved.Name)
 }
 
-func TestCreateEdgeService_DuplicateLocalID(t *testing.T) {
+func TestCreateEdgeService_DuplicateID(t *testing.T) {
 	storage, cleanup := setupTestStorage(t)
 	defer cleanup()
 
 	service1 := &models.EdgeService{
-		ID:         "server-123",
+		ID:         "svc-123",
 		EdgeID:     "edge-1",
-		LocalID:    "local-123",
 		Name:       "test-service-1",
 		TunnelPort: 8080,
 		LocalHost:  "localhost",
 		LocalPort:  3000,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -76,23 +74,22 @@ func TestCreateEdgeService_DuplicateLocalID(t *testing.T) {
 	err := storage.CreateEdgeService(service1)
 	require.NoError(t, err)
 
-	// Try to create another service with same edge_id + local_id
+	// Try to create another service with same ID
 	service2 := &models.EdgeService{
-		ID:         "server-456",
-		EdgeID:     "edge-1",
-		LocalID:    "local-123", // Same local_id for same edge
+		ID:         "svc-123", // Same ID
+		EdgeID:     "edge-2",
 		Name:       "test-service-2",
 		TunnelPort: 8081,
 		LocalHost:  "localhost",
 		LocalPort:  3001,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
 
 	err = storage.CreateEdgeService(service2)
-	assert.Error(t, err) // Should fail due to unique constraint
+	assert.Error(t, err) // Should fail due to primary key constraint
 }
 
 func TestCreateEdgeService_DifferentEdgesSameLocalID(t *testing.T) {
@@ -100,15 +97,14 @@ func TestCreateEdgeService_DifferentEdgesSameLocalID(t *testing.T) {
 	defer cleanup()
 
 	service1 := &models.EdgeService{
-		ID:         "server-123",
+		ID:         "svc-123",
 		EdgeID:     "edge-1",
-		LocalID:    "local-123",
 		Name:       "test-service-1",
 		TunnelPort: 8080,
 		LocalHost:  "localhost",
 		LocalPort:  3000,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -118,15 +114,14 @@ func TestCreateEdgeService_DifferentEdgesSameLocalID(t *testing.T) {
 
 	// Different edge can have same local_id
 	service2 := &models.EdgeService{
-		ID:         "server-456",
+		ID:         "svc-456",
 		EdgeID:     "edge-2", // Different edge
-		LocalID:    "local-123", // Same local_id
 		Name:       "test-service-2",
 		TunnelPort: 8081,
 		LocalHost:  "localhost",
 		LocalPort:  3001,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -140,15 +135,14 @@ func TestUpdateEdgeService(t *testing.T) {
 	defer cleanup()
 
 	service := &models.EdgeService{
-		ID:         "server-123",
+		ID:         "svc-123",
 		EdgeID:     "edge-1",
-		LocalID:    "local-123",
 		Name:       "test-service",
 		TunnelPort: 8080,
 		LocalHost:  "localhost",
 		LocalPort:  3000,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -159,18 +153,18 @@ func TestUpdateEdgeService(t *testing.T) {
 	// Update the service
 	service.Name = "updated-service"
 	service.TunnelPort = 9090
-	service.Status = "inactive"
+	service.Enabled = false
 	service.UpdatedAt = time.Now()
 
 	err = storage.UpdateEdgeService(service)
 	assert.NoError(t, err)
 
 	// Verify update
-	retrieved, err := storage.GetEdgeServiceByLocalID("edge-1", "local-123")
+	retrieved, err := storage.GetEdgeService("svc-123")
 	assert.NoError(t, err)
 	assert.Equal(t, "updated-service", retrieved.Name)
 	assert.Equal(t, 9090, retrieved.TunnelPort)
-	assert.Equal(t, "inactive", retrieved.Status)
+	assert.Equal(t, false, retrieved.Enabled)
 }
 
 func TestDeleteEdgeService(t *testing.T) {
@@ -178,15 +172,14 @@ func TestDeleteEdgeService(t *testing.T) {
 	defer cleanup()
 
 	service := &models.EdgeService{
-		ID:         "server-123",
+		ID:         "svc-123",
 		EdgeID:     "edge-1",
-		LocalID:    "local-123",
 		Name:       "test-service",
 		TunnelPort: 8080,
 		LocalHost:  "localhost",
 		LocalPort:  3000,
 		Protocol:   "http",
-		Status:     "active",
+		Enabled:    true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -194,21 +187,21 @@ func TestDeleteEdgeService(t *testing.T) {
 	err := storage.CreateEdgeService(service)
 	require.NoError(t, err)
 
-	// Delete the service (soft delete - sets status to deleted)
-	err = storage.DeleteEdgeService("edge-1", "local-123")
+	// Delete the service (hard delete)
+	err = storage.DeleteEdgeService("svc-123")
 	assert.NoError(t, err)
 
-	// Verify it's marked as deleted
-	retrieved, err := storage.GetEdgeServiceByLocalID("edge-1", "local-123")
-	assert.NoError(t, err)
-	assert.Equal(t, "deleted", retrieved.Status)
+	// Verify it's actually deleted
+	_, err = storage.GetEdgeService("svc-123")
+	assert.Error(t, err) // Should not be found
+	assert.Contains(t, err.Error(), "service not found")
 }
 
 func TestDeleteEdgeService_NotFound(t *testing.T) {
 	storage, cleanup := setupTestStorage(t)
 	defer cleanup()
 
-	err := storage.DeleteEdgeService("edge-999", "local-999")
+	err := storage.DeleteEdgeService("svc-999")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "service not found")
 }
@@ -220,41 +213,38 @@ func TestListEdgeServices(t *testing.T) {
 	// Create multiple services
 	services := []*models.EdgeService{
 		{
-			ID:         "server-1",
+			ID:         "svc-1",
 			EdgeID:     "edge-1",
-			LocalID:    "local-1",
 			Name:       "service-1",
 			TunnelPort: 8080,
 			LocalHost:  "localhost",
 			LocalPort:  3000,
 			Protocol:   "http",
-			Status:     "active",
+			Enabled:    true,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:         "server-2",
+			ID:         "svc-2",
 			EdgeID:     "edge-1",
-			LocalID:    "local-2",
 			Name:       "service-2",
 			TunnelPort: 8081,
 			LocalHost:  "localhost",
 			LocalPort:  3001,
 			Protocol:   "websocket",
-			Status:     "active",
+			Enabled:    true,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:         "server-3",
+			ID:         "svc-3",
 			EdgeID:     "edge-2", // Different edge
-			LocalID:    "local-3",
 			Name:       "service-3",
 			TunnelPort: 8082,
 			LocalHost:  "localhost",
 			LocalPort:  3002,
 			Protocol:   "http",
-			Status:     "active",
+			Enabled:    true,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
@@ -276,34 +266,32 @@ func TestListEdgeServices(t *testing.T) {
 	assert.Len(t, edge2Services, 1)
 }
 
-func TestListEdgeServices_ExcludesDeleted(t *testing.T) {
+func TestListEdgeServices_IncludesAllServices(t *testing.T) {
 	storage, cleanup := setupTestStorage(t)
 	defer cleanup()
 
 	services := []*models.EdgeService{
 		{
-			ID:         "server-1",
+			ID:         "svc-1",
 			EdgeID:     "edge-1",
-			LocalID:    "local-1",
 			Name:       "service-1",
 			TunnelPort: 8080,
 			LocalHost:  "localhost",
 			LocalPort:  3000,
 			Protocol:   "http",
-			Status:     "active",
+			Enabled:    true,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:         "server-2",
+			ID:         "svc-2",
 			EdgeID:     "edge-1",
-			LocalID:    "local-2",
 			Name:       "service-2",
 			TunnelPort: 8081,
 			LocalHost:  "localhost",
 			LocalPort:  3001,
 			Protocol:   "http",
-			Status:     "deleted",
+			Enabled:    false,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
@@ -314,54 +302,50 @@ func TestListEdgeServices_ExcludesDeleted(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// List should exclude deleted services
+	// List should include all services (both enabled and disabled)
 	edgeServices, err := storage.ListEdgeServices("edge-1")
 	assert.NoError(t, err)
-	assert.Len(t, edgeServices, 1)
-	assert.Equal(t, "service-1", edgeServices[0].Name)
+	assert.Len(t, edgeServices, 2)
 }
 
-func TestListAllActiveServices(t *testing.T) {
+func TestListAllEnabledServices(t *testing.T) {
 	storage, cleanup := setupTestStorage(t)
 	defer cleanup()
 
 	services := []*models.EdgeService{
 		{
-			ID:         "server-1",
+			ID:         "svc-1",
 			EdgeID:     "edge-1",
-			LocalID:    "local-1",
 			Name:       "service-1",
 			TunnelPort: 8080,
 			LocalHost:  "localhost",
 			LocalPort:  3000,
 			Protocol:   "http",
-			Status:     "active",
+			Enabled:    true,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:         "server-2",
+			ID:         "svc-2",
 			EdgeID:     "edge-2",
-			LocalID:    "local-2",
 			Name:       "service-2",
 			TunnelPort: 8081,
 			LocalHost:  "localhost",
 			LocalPort:  3001,
 			Protocol:   "http",
-			Status:     "active",
+			Enabled:    true,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:         "server-3",
+			ID:         "svc-3",
 			EdgeID:     "edge-3",
-			LocalID:    "local-3",
 			Name:       "service-3",
 			TunnelPort: 8082,
 			LocalHost:  "localhost",
 			LocalPort:  3002,
 			Protocol:   "http",
-			Status:     "inactive",
+			Enabled:    false,
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		},
@@ -372,8 +356,8 @@ func TestListAllActiveServices(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// List all active services
-	activeServices, err := storage.ListAllActiveServices()
+	// List all enabled services
+	enabledServices, err := storage.ListAllEnabledServices()
 	assert.NoError(t, err)
-	assert.Len(t, activeServices, 2) // Only active services
+	assert.Len(t, enabledServices, 2) // Only enabled services (not disabled)
 }

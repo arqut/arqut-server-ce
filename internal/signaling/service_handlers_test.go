@@ -30,13 +30,13 @@ func (m *MockStorage) UpdateEdgeService(service *models.EdgeService) error {
 	return args.Error(0)
 }
 
-func (m *MockStorage) DeleteEdgeService(edgeID, localID string) error {
-	args := m.Called(edgeID, localID)
+func (m *MockStorage) DeleteEdgeService(id string) error {
+	args := m.Called(id)
 	return args.Error(0)
 }
 
-func (m *MockStorage) GetEdgeServiceByLocalID(edgeID, localID string) (*models.EdgeService, error) {
-	args := m.Called(edgeID, localID)
+func (m *MockStorage) GetEdgeService(id string) (*models.EdgeService, error) {
+	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -51,7 +51,7 @@ func (m *MockStorage) ListEdgeServices(edgeID string) ([]*models.EdgeService, er
 	return args.Get(0).([]*models.EdgeService), args.Error(1)
 }
 
-func (m *MockStorage) ListAllActiveServices() ([]*models.EdgeService, error) {
+func (m *MockStorage) ListAllEnabledServices() ([]*models.EdgeService, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -102,13 +102,13 @@ func TestHandleServiceSync(t *testing.T) {
 			Data: map[string]interface{}{
 				"operation": "created",
 				"service": map[string]interface{}{
-					"localId":    "svc-1",
+					"id":         "svc-1",
 					"name":       "Web Server",
-					"tunnelPort": 8080,
-					"localHost":  "localhost",
-					"localPort":  3000,
+					"tunnel_port": 8080,
+					"local_host":  "localhost",
+					"local_port":  3000,
 					"protocol":   "http",
-					"status":     "active",
+					"enabled":    true,
 				},
 			},
 		}
@@ -135,15 +135,14 @@ func TestHandleServiceSync(t *testing.T) {
 		mockConn.sentMessages = nil
 
 		existingService := &models.EdgeService{
-			ID:         "server-id-123",
+			ID:         "svc-1",
 			EdgeID:     edgeID,
-			LocalID:    "svc-1",
 			Name:       "Old Name",
 			TunnelPort: 8080,
 			LocalHost:  "localhost",
 			LocalPort:  3000,
 			Protocol:   "http",
-			Status:     "active",
+			Enabled:    true,
 		}
 
 		msg := &models.SignalingMessage{
@@ -152,18 +151,18 @@ func TestHandleServiceSync(t *testing.T) {
 			Data: map[string]interface{}{
 				"operation": "updated",
 				"service": map[string]interface{}{
-					"localId":    "svc-1",
+					"id":         "svc-1",
 					"name":       "Updated Name",
-					"tunnelPort": 8081,
-					"localHost":  "localhost",
-					"localPort":  3001,
+					"tunnel_port": 8081,
+					"local_host":  "localhost",
+					"local_port":  3001,
 					"protocol":   "http",
-					"status":     "active",
+					"enabled":    true,
 				},
 			},
 		}
 
-		mockStorage.On("GetEdgeServiceByLocalID", edgeID, "svc-1").Return(existingService, nil)
+		mockStorage.On("GetEdgeService", "svc-1").Return(existingService, nil)
 		mockStorage.On("UpdateEdgeService", mock.AnythingOfType("*models.EdgeService")).Return(nil)
 
 		server.handleServiceSync(peerConn, msg)
@@ -187,17 +186,17 @@ func TestHandleServiceSync(t *testing.T) {
 			Data: map[string]interface{}{
 				"operation": "deleted",
 				"service": map[string]interface{}{
-					"localId":    "svc-1",
+					"id":         "svc-1",
 					"name":       "Web Server",
-					"tunnelPort": 8080,
-					"localHost":  "localhost",
-					"localPort":  3000,
+					"tunnel_port": 8080,
+					"local_host":  "localhost",
+					"local_port":  3000,
 					"protocol":   "http",
 				},
 			},
 		}
 
-		mockStorage.On("DeleteEdgeService", edgeID, "svc-1").Return(nil)
+		mockStorage.On("DeleteEdgeService", "svc-1").Return(nil)
 
 		server.handleServiceSync(peerConn, msg)
 
@@ -256,11 +255,11 @@ func TestHandleServiceSync(t *testing.T) {
 			Data: map[string]interface{}{
 				"operation": "created",
 				"service": map[string]interface{}{
-					"localId":    "svc-1",
+					"id":         "svc-1",
 					"name":       "", // Invalid: empty name
-					"tunnelPort": 8080,
-					"localHost":  "localhost",
-					"localPort":  3000,
+					"tunnel_port": 8080,
+					"local_host":  "localhost",
+					"local_port":  3000,
 					"protocol":   "http",
 				},
 			},
@@ -284,11 +283,11 @@ func TestHandleServiceSync(t *testing.T) {
 			Data: map[string]interface{}{
 				"operation": "created",
 				"service": map[string]interface{}{
-					"localId":    "svc-1",
+					"id":         "svc-1",
 					"name":       "Web Server",
-					"tunnelPort": 8080,
-					"localHost":  "localhost",
-					"localPort":  3000,
+					"tunnel_port": 8080,
+					"local_host":  "localhost",
+					"local_port":  3000,
 					"protocol":   "http",
 				},
 			},
@@ -314,11 +313,11 @@ func TestHandleServiceSync(t *testing.T) {
 			Data: map[string]interface{}{
 				"operation": "invalid-op",
 				"service": map[string]interface{}{
-					"localId":    "svc-1",
+					"id":         "svc-1",
 					"name":       "Web Server",
-					"tunnelPort": 8080,
-					"localHost":  "localhost",
-					"localPort":  3000,
+					"tunnel_port": 8080,
+					"local_host":  "localhost",
+					"local_port":  3000,
 					"protocol":   "http",
 				},
 			},
@@ -359,22 +358,22 @@ func TestHandleServiceSyncBatch(t *testing.T) {
 
 		services := []interface{}{
 			map[string]interface{}{
-				"localId":    "svc-1",
+				"id":         "svc-1",
 				"name":       "Service 1",
-				"tunnelPort": 8080,
-				"localHost":  "localhost",
-				"localPort":  3000,
+				"tunnel_port": 8080,
+				"local_host":  "localhost",
+				"local_port":  3000,
 				"protocol":   "http",
-				"status":     "active",
+				"enabled":    true,
 			},
 			map[string]interface{}{
-				"localId":    "svc-2",
+				"id":         "svc-2",
 				"name":       "Service 2",
-				"tunnelPort": 8081,
-				"localHost":  "localhost",
-				"localPort":  3001,
+				"tunnel_port": 8081,
+				"local_host":  "localhost",
+				"local_port":  3001,
 				"protocol":   "websocket",
-				"status":     "active",
+				"enabled":    true,
 			},
 		}
 
@@ -387,16 +386,16 @@ func TestHandleServiceSyncBatch(t *testing.T) {
 		}
 
 		// Mock storage - first update fails (not found), then create succeeds
-		mockStorage.On("GetEdgeServiceByLocalID", edgeID, "svc-1").
+		mockStorage.On("GetEdgeService", "svc-1").
 			Return(nil, errors.New("not found"))
 		mockStorage.On("CreateEdgeService", mock.MatchedBy(func(svc *models.EdgeService) bool {
-			return svc.LocalID == "svc-1"
+			return svc.ID == "svc-1"
 		})).Return(nil)
 
-		mockStorage.On("GetEdgeServiceByLocalID", edgeID, "svc-2").
+		mockStorage.On("GetEdgeService", "svc-2").
 			Return(nil, errors.New("not found"))
 		mockStorage.On("CreateEdgeService", mock.MatchedBy(func(svc *models.EdgeService) bool {
-			return svc.LocalID == "svc-2"
+			return svc.ID == "svc-2"
 		})).Return(nil)
 
 		server.handleServiceSyncBatch(peerConn, msg)
@@ -421,9 +420,9 @@ func TestHandleServiceSyncBatch(t *testing.T) {
 			services[i] = map[string]interface{}{
 				"localId":    "svc-" + string(rune(i)),
 				"name":       "Service",
-				"tunnelPort": 8080,
-				"localHost":  "localhost",
-				"localPort":  3000,
+				"tunnel_port": 8080,
+				"local_host":  "localhost",
+				"local_port":  3000,
 				"protocol":   "http",
 			}
 		}
@@ -483,20 +482,20 @@ func TestHandleServiceSyncBatch(t *testing.T) {
 
 		services := []interface{}{
 			map[string]interface{}{
-				"localId":    "svc-valid",
+				"id":         "svc-ok",
 				"name":       "Valid Service",
-				"tunnelPort": 8080,
-				"localHost":  "localhost",
-				"localPort":  3000,
+				"tunnel_port": 8080,
+				"local_host":  "localhost",
+				"local_port":  3000,
 				"protocol":   "http",
 			},
 			"invalid service", // This should be skipped
 			map[string]interface{}{
-				"localId":    "svc-invalid",
+				"id":         "svc-bad",
 				"name":       "", // Invalid: empty name
-				"tunnelPort": 8081,
-				"localHost":  "localhost",
-				"localPort":  3001,
+				"tunnel_port": 8081,
+				"local_host":  "localhost",
+				"local_port":  3001,
 				"protocol":   "http",
 			},
 		}
@@ -510,10 +509,10 @@ func TestHandleServiceSyncBatch(t *testing.T) {
 		}
 
 		// Only the valid service should be created
-		mockStorage.On("GetEdgeServiceByLocalID", edgeID, "svc-valid").
+		mockStorage.On("GetEdgeService", "svc-ok").
 			Return(nil, errors.New("not found"))
 		mockStorage.On("CreateEdgeService", mock.MatchedBy(func(svc *models.EdgeService) bool {
-			return svc.LocalID == "svc-valid"
+			return svc.ID == "svc-ok"
 		})).Return(nil)
 
 		server.handleServiceSyncBatch(peerConn, msg)
@@ -552,26 +551,24 @@ func TestHandleServiceListRequest(t *testing.T) {
 
 		services := []*models.EdgeService{
 			{
-				ID:         "srv-1",
+				ID:         "svc-1",
 				EdgeID:     edgeID,
-				LocalID:    "svc-1",
 				Name:       "Service 1",
 				TunnelPort: 8080,
 				LocalHost:  "localhost",
 				LocalPort:  3000,
 				Protocol:   "http",
-				Status:     "active",
+				Enabled:    true,
 			},
 			{
-				ID:         "srv-2",
+				ID:         "svc-2",
 				EdgeID:     edgeID,
-				LocalID:    "svc-2",
 				Name:       "Service 2",
 				TunnelPort: 8081,
 				LocalHost:  "localhost",
 				LocalPort:  3001,
 				Protocol:   "websocket",
-				Status:     "active",
+				Enabled:    true,
 			},
 		}
 
@@ -594,7 +591,7 @@ func TestHandleServiceListRequest(t *testing.T) {
 
 		// Verify services are in response
 		responseData := responseMsg.Data.(map[string]interface{})
-		serviceList := responseData["services"].([]models.ServiceData)
+		serviceList := responseData["services"].([]models.EdgeService)
 		assert.Equal(t, 2, len(serviceList))
 	})
 
