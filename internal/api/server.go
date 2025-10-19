@@ -78,6 +78,9 @@ func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Regist
 
 // setupRoutes configures all API routes
 func (s *Server) setupRoutes() {
+	// Services dashboard UI (public, outside API group)
+	s.app.Get("/dashboard/services", s.handleServicesDashboard)
+
 	// API v1 group
 	api := s.app.Group("/api/v1")
 

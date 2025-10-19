@@ -131,6 +131,12 @@ func (s *Server) handleListServices(c *fiber.Ctx) error {
 	return SuccessResp(c, services)
 }
 
+// Serve the services dashboard HTML page
+func (s *Server) handleServicesDashboard(c *fiber.Ctx) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.Send(servicesHTML)
+}
+
 // Get a specific peer
 func (s *Server) handleGetPeer(c *fiber.Ctx) error {
 	peerID := c.Params("id")
