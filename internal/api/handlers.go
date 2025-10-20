@@ -131,6 +131,17 @@ func (s *Server) handleListServices(c *fiber.Ctx) error {
 	return SuccessResp(c, services)
 }
 
+func (s *Server) handleDeleteService(c *fiber.Ctx) error {
+	err := s.storage.DeleteEdgeService(c.Params("id"))
+	if err != nil {
+		return ErrorInternalServerErrorResp(c, "Failed to delete service")
+	}
+
+	return SuccessResp(c, fiber.Map{
+		"message": "Service deleted successfully",
+	})
+}
+
 // Serve the services dashboard HTML page
 func (s *Server) handleServicesDashboard(c *fiber.Ctx) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
