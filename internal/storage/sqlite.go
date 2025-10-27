@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/internal/pkg/models"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

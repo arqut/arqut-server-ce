@@ -13,7 +13,7 @@ import (
 	"github.com/arqut/arqut-server-ce/internal/config"
 	"github.com/arqut/arqut-server-ce/internal/registry"
 	"github.com/arqut/arqut-server-ce/internal/storage"
-	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/internal/pkg/models"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )

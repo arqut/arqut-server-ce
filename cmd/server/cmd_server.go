@@ -14,7 +14,7 @@ import (
 	"github.com/arqut/arqut-server-ce/internal/signaling"
 	"github.com/arqut/arqut-server-ce/internal/storage"
 	"github.com/arqut/arqut-server-ce/internal/turn"
-	"github.com/arqut/arqut-server-ce/pkg/logger"
+	"github.com/arqut/arqut-server-ce/internal/pkg/logger"
 )
 
 // runServer starts the main server

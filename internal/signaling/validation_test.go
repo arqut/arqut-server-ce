@@ -3,7 +3,7 @@ package signaling
 import (
 	"testing"
 
-	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/internal/pkg/models"
 	"github.com/stretchr/testify/assert"
 )
 

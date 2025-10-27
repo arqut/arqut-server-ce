@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/arqut/arqut-server-ce/pkg/models"
+import "github.com/arqut/arqut-server-ce/internal/pkg/models"
 
 // Storage defines the interface for persisting service metadata
 type Storage interface {

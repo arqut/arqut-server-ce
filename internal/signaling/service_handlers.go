@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/internal/pkg/models"
 )
 
 // Message type constants for service sync
