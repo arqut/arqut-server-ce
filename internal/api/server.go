@@ -1,8 +1,10 @@
 package api
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"net"
 	"time"
 
 	"github.com/arqut/arqut-server-ce/internal/config"
@@ -29,11 +31,12 @@ type Server struct {
 	registry  *registry.Registry
 	storage   storage.Storage
 	signaling SignalingServer
+	tlsConfig *tls.Config
 	logger    *slog.Logger
 }
 
 // New creates a new API server
-func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Registry, storage storage.Storage, sig *signaling.Server, log *slog.Logger) *Server {
+func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Registry, storage storage.Storage, sig *signaling.Server, tlsConfig *tls.Config, log *slog.Logger) *Server {
 	app := fiber.New(fiber.Config{
 		AppName:               "ArqTurn REST API",
 		DisableStartupMessage: true,
@@ -68,6 +71,7 @@ func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Regist
 		registry:  reg,
 		storage:   storage,
 		signaling: sig,
+		tlsConfig: tlsConfig,
 		logger:    log,
 	}
 
@@ -120,6 +124,24 @@ func (s *Server) setupRoutes() {
 // Start starts the API server
 func (s *Server) Start() error {
 	addr := fmt.Sprintf("0.0.0.0:%d", s.cfg.Port)
+
+	// Use HTTPS if TLS config is available
+	if s.tlsConfig != nil {
+		s.logger.Info("Starting HTTPS server with TLS", "addr", addr)
+
+		// Create TCP listener
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			return fmt.Errorf("failed to create listener: %w", err)
+		}
+
+		// Wrap with TLS
+		tlsListener := tls.NewListener(ln, s.tlsConfig)
+		return s.app.Listener(tlsListener)
+	}
+
+	// Fall back to HTTP
+	s.logger.Info("Starting HTTP server (no TLS)", "addr", addr)
 	return s.app.Listen(addr)
 }
 

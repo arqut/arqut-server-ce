@@ -111,10 +111,14 @@ func runServer() {
 	defer signalingServer.Stop()
 
 	// Initialize REST API server (includes WebSocket signaling)
-	apiServer := api.New(&cfg.API, &cfg.Turn, peerRegistry, store, signalingServer, log.Logger)
+	apiServer := api.New(&cfg.API, &cfg.Turn, peerRegistry, store, signalingServer, tlsConfig, log.Logger)
 
-	// Start unified HTTP server (REST API + WebSocket)
-	log.Info("Starting HTTP server (REST API + WebSocket)", "port", cfg.API.Port)
+	// Start unified HTTP/HTTPS server (REST API + WebSocket)
+	if tlsConfig != nil {
+		log.Info("Starting HTTPS server (REST API + WebSocket)", "port", cfg.API.Port)
+	} else {
+		log.Info("Starting HTTP server (REST API + WebSocket)", "port", cfg.API.Port)
+	}
 	go func() {
 		if err := apiServer.Start(); err != nil {
 			log.Error("HTTP server error", "error", err)
