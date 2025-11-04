@@ -12,6 +12,14 @@ A self-contained WebRTC infrastructure server combining TURN/STUN, WebSocket sig
 - **Secure by Default** - API key authentication with Argon2id hashing
 - **Production Ready** - Graceful shutdown, hot reload, comprehensive logging
 
+## Documentation
+
+**New to ArqTurn?** Start with the [Complete Setup Guide](docs/SETUP.md) for detailed instructions on domain configuration, DNS setup, and certificate issuance.
+
+- **[Setup Guide](docs/SETUP.md)** - Complete installation, domain setup, and TLS configuration
+- **[API Reference](docs/API.md)** - Full REST API documentation
+- **[Integration Guide](INTEGRATION.md)** - WebSocket signaling and message formats
+
 ## Quick Start
 
 ### Installation
@@ -337,10 +345,11 @@ grep api_key config.yaml
 4. Check relay port range is not blocked
 
 ### TLS Issues
-1. Verify DNS points to your server
+1. Verify DNS points to your server: `dig turn.yourdomain.com +short`
 2. Check port 80 is open (for HTTP-01 challenge)
 3. Review ACME logs in server output
 4. Ensure email is configured
+5. See [Setup Guide - Troubleshooting](docs/SETUP.md#troubleshooting) for detailed solutions
 
 ## Architecture
 
@@ -365,8 +374,10 @@ Community Edition - See LICENSE file for details
 
 ## Support
 
-- Documentation: [docs/](docs/)
-- Issues: GitHub Issues
+- **[Setup Guide](docs/SETUP.md)** - Installation, domain setup, and TLS certificates
+- **[API Documentation](docs/API.md)** - Complete REST API reference
+- **[Integration Guide](INTEGRATION.md)** - WebSocket signaling
+- **GitHub Issues** - Bug reports and feature requests
 
 ## Contributing
 
