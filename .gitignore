@@ -1,0 +1,68 @@
+# CLAUDE.md - AI assistant guidance file
+CLAUDE.md
+INTEGRATION.md
+SERVER_SYNC_IMPLEMENTATION.md
+
+# Reference implementations (for migration reference only)
+reference_projects/
+
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+arqturn
+arqut-*
+
+# Build artifacts
+dist/
+build/
+bin/
+*.log
+coverage.out
+coverage.html
+
+# Go workspace
+vendor/
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.intellij/
+*.iml
+.DS_Store
+
+# Configuration with secrets
+*.secret
+*.env
+.env
+config.yaml
+local*.yaml
+local*.yml
+
+# Certificates
+certs/
+cert/
+*.crt
+*.key
+*.pem
+
+# Database
+db/
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+*.tmp
+__debug*
+
+# OS
+.DS_Store
+Thumbs.db
+.vscode/
