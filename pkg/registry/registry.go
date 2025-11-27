@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/models"
 )
 
 // Registry manages connected peers

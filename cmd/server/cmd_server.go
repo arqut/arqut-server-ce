@@ -7,14 +7,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/arqut/arqut-server-ce/internal/acme"
+	"github.com/arqut/arqut-server-ce/pkg/acme"
 	"github.com/arqut/arqut-server-ce/internal/api"
 	"github.com/arqut/arqut-server-ce/internal/config"
-	"github.com/arqut/arqut-server-ce/internal/registry"
-	"github.com/arqut/arqut-server-ce/internal/signaling"
+	"github.com/arqut/arqut-server-ce/pkg/registry"
+	"github.com/arqut/arqut-server-ce/pkg/signaling"
 	"github.com/arqut/arqut-server-ce/internal/storage"
-	"github.com/arqut/arqut-server-ce/internal/turn"
-	"github.com/arqut/arqut-server-ce/internal/pkg/logger"
+	"github.com/arqut/arqut-server-ce/pkg/turn"
+	"github.com/arqut/arqut-server-ce/pkg/logger"
 )
 
 // runServer starts the main server

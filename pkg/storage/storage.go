@@ -1,9 +1,9 @@
 package storage
 
-import "github.com/arqut/arqut-server-ce/internal/pkg/models"
+import "github.com/arqut/arqut-server-ce/pkg/models"
 
-// Storage defines the interface for persisting service metadata
-type Storage interface {
+// ServiceStorage defines the interface for persisting edge service metadata
+type ServiceStorage interface {
 	// Initialize the storage (create tables, run migrations)
 	Init() error
 

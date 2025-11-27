@@ -11,9 +11,9 @@ import (
 
 	"github.com/arqut/arqut-server-ce/internal/apikey"
 	"github.com/arqut/arqut-server-ce/internal/config"
-	"github.com/arqut/arqut-server-ce/internal/registry"
-	"github.com/arqut/arqut-server-ce/internal/pkg/logger"
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/registry"
+	"github.com/arqut/arqut-server-ce/pkg/logger"
+	"github.com/arqut/arqut-server-ce/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

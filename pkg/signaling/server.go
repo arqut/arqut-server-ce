@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/arqut/arqut-server-ce/internal/config"
-	"github.com/arqut/arqut-server-ce/internal/registry"
-	"github.com/arqut/arqut-server-ce/internal/storage"
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/registry"
+	"github.com/arqut/arqut-server-ce/pkg/storage"
+	"github.com/arqut/arqut-server-ce/pkg/models"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
@@ -50,7 +50,7 @@ type Server struct {
 	turnConfig  *config.TurnConfig
 	logger      *slog.Logger
 	registry    *registry.Registry
-	storage     storage.Storage
+	storage     storage.ServiceStorage
 	connections map[string]*PeerConnection
 	mu          sync.RWMutex
 	ctx         context.Context
@@ -58,7 +58,7 @@ type Server struct {
 }
 
 // New creates a new signaling server
-func New(cfg *config.SignalingConfig, turnCfg *config.TurnConfig, reg *registry.Registry, store storage.Storage, logger *slog.Logger) *Server {
+func New(cfg *config.SignalingConfig, turnCfg *config.TurnConfig, reg *registry.Registry, store storage.ServiceStorage, logger *slog.Logger) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Server{

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/models"
 )
 
 var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)

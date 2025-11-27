@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/models"
 	"github.com/gofiber/fiber/v2"
 )
 
