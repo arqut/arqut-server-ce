@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/pion/turn/v4"
 )
 

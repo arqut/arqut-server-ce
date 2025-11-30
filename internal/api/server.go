@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/arqut/arqut-server-ce/internal/middleware"
 	"github.com/arqut/arqut-server-ce/pkg/registry"
 	"github.com/arqut/arqut-server-ce/pkg/signaling"

@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/lego"

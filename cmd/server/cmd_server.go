@@ -9,7 +9,7 @@ import (
 
 	"github.com/arqut/arqut-server-ce/pkg/acme"
 	"github.com/arqut/arqut-server-ce/internal/api"
-	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/arqut/arqut-server-ce/pkg/registry"
 	"github.com/arqut/arqut-server-ce/pkg/signaling"
 	"github.com/arqut/arqut-server-ce/internal/storage"

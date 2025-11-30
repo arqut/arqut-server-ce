@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/arqut/arqut-server-ce/internal/apikey"
-	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/arqut/arqut-server-ce/pkg/registry"
 	"github.com/arqut/arqut-server-ce/pkg/logger"
 	"github.com/arqut/arqut-server-ce/pkg/models"
