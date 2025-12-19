@@ -7,8 +7,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/arqut/arqut-server-ce/internal/middleware"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/arqut/arqut-server-ce/pkg/registry"
 	"github.com/arqut/arqut-server-ce/pkg/signaling"
 	"github.com/arqut/arqut-server-ce/pkg/storage"
@@ -20,7 +20,7 @@ import (
 
 // SignalingServer interface to avoid circular dependency
 type SignalingServer interface {
-	RegisterRoutes(router fiber.Router)
+	RegisterRoutes(router fiber.Router, authMiddleware fiber.Handler)
 }
 
 // Server represents the REST API server
@@ -46,7 +46,7 @@ func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Regist
 	// Global middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
-		Format:     "${time} ARQUT-SERVER-CE [INFO] [API] ${status} ${method} ${path} ${latency}\n",
+		Format:     "${time} ARQUT [INFO] [API] ${status} ${method} ${path} ${latency}\n",
 		TimeFormat: "2006/01/02 15:04:05",
 		CustomTags: map[string]logger.LogFunc{
 			"time": func(output logger.Buffer, c *fiber.Ctx, data *logger.Data, extraParam string) (int, error) {
@@ -104,9 +104,9 @@ func (s *Server) setupRoutes() {
 		protected.Get("/peers", s.handleListPeers)
 		protected.Get("/peers/:id", s.handleGetPeer)
 
-		// Service management
-		protected.Get("/services", s.handleListServices)
-		protected.Delete("/services/:id", s.handleDeleteService)
+		// Edge service management
+		protected.Get("/edge/services", s.handleListServices)
+		protected.Delete("/edge/services/:id", s.handleDeleteService)
 	}
 
 	// Admin endpoints (require API key)
@@ -117,7 +117,7 @@ func (s *Server) setupRoutes() {
 
 	// WebSocket signaling routes (under /api/v1/signaling)
 	if s.signaling != nil {
-		s.signaling.RegisterRoutes(api)
+		s.signaling.RegisterRoutes(api, nil)
 	}
 }
 

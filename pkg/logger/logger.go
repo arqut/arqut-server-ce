@@ -58,7 +58,7 @@ func (h *ArqutHandler) Handle(_ context.Context, r slog.Record) error {
 
 	// Timestamp (format: 2006/01/02 15:04:05)
 	buf.WriteString(r.Time.Format("2006/01/02 15:04:05"))
-	buf.WriteString(" ARQUT-SERVER-CE ")
+	buf.WriteString(" ARQUT ")
 
 	// Log level
 	levelStr := levelString(r.Level)

@@ -14,6 +14,7 @@ type Config struct {
 	Domain  string `koanf:"domain"`
 	Email   string `koanf:"email"`
 	CertDir string `koanf:"cert_dir"`
+	DBPath  string `koanf:"db_path"`
 
 	ACME      ACMEConfig      `koanf:"acme"`
 	Turn      TurnConfig      `koanf:"turn"`
@@ -38,11 +39,11 @@ type ACMEConfig struct {
 
 // TurnConfig holds TURN/STUN server configuration
 type TurnConfig struct {
-	Realm    string     `koanf:"realm"`
-	PublicIP string     `koanf:"public_ip"`
-	Ports    TurnPorts  `koanf:"ports"`
-	RelayPortRange PortRange `koanf:"relay_port_range"`
-	Auth     AuthConfig `koanf:"auth"`
+	Realm          string     `koanf:"realm"`
+	PublicIP       string     `koanf:"public_ip"`
+	Ports          TurnPorts  `koanf:"ports"`
+	RelayPortRange PortRange  `koanf:"relay_port_range"`
+	Auth           AuthConfig `koanf:"auth"`
 }
 
 // TurnPorts defines TURN server port configuration
@@ -60,10 +61,10 @@ type PortRange struct {
 
 // AuthConfig holds authentication configuration
 type AuthConfig struct {
-	Mode        string   `koanf:"mode"`
-	Secret      string   `koanf:"secret"`
-	OldSecrets  []string `koanf:"old_secrets"`
-	TTLSeconds  int      `koanf:"ttl_seconds"`
+	Mode        string       `koanf:"mode"`
+	Secret      string       `koanf:"secret"`
+	OldSecrets  []string     `koanf:"old_secrets"`
+	TTLSeconds  int          `koanf:"ttl_seconds"`
 	StaticUsers []StaticUser `koanf:"static_users"`
 }
 
@@ -88,8 +89,8 @@ type SignalingPorts struct {
 
 // APIConfig holds REST API configuration
 type APIConfig struct {
-	Port        int      `koanf:"port"`
-	CORSOrigins []string `koanf:"cors_origins"`
+	Port        int          `koanf:"port"`
+	CORSOrigins []string     `koanf:"cors_origins"`
 	APIKey      APIKeyConfig `koanf:"api_key"`
 }
 
@@ -141,6 +142,9 @@ func Load(configPath string) (*Config, error) {
 func applyDefaults(cfg *Config) {
 	if cfg.CertDir == "" {
 		cfg.CertDir = "./certs"
+	}
+	if cfg.DBPath == "" {
+		cfg.DBPath = "./arqut.db"
 	}
 
 	// ACME defaults

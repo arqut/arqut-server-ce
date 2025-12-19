@@ -22,18 +22,18 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 	s.logger.Debug("Received service sync message", "edge", from.Peer.ID, "from", from.Peer.Type)
 
 	// Parse service sync message
-	data, ok := msg.Data.(map[string]interface{})
+	data, ok := msg.Data.(map[string]any)
 	if !ok {
 		s.logger.Error("Invalid service sync message data format", "edge", from.Peer.ID)
-		s.sendServiceSyncAck(from, "", "", "error", "Invalid message data format")
+		s.SendServiceSyncAck(from, data, false, "Invalid message data format")
 		return
 	}
 
 	operation, _ := data["operation"].(string)
-	serviceData, ok := data["service"].(map[string]interface{})
+	serviceData, ok := data["service"].(map[string]any)
 	if !ok {
 		s.logger.Error("Invalid service data format in sync message", "edge", from.Peer.ID, "operation", operation)
-		s.sendServiceSyncAck(from, "", "", "error", "Invalid service data format")
+		s.SendServiceSyncAck(from, data, false, "Invalid service data format")
 		return
 	}
 
@@ -41,7 +41,7 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 	service, err := s.parseEdgeService(serviceData)
 	if err != nil {
 		s.logger.Error("Failed to parse service data", "edge", from.Peer.ID, "operation", operation, "error", err)
-		s.sendServiceSyncAck(from, "", "", "error", fmt.Sprintf("Failed to parse service: %v", err))
+		s.SendServiceSyncAck(from, data, false, fmt.Sprintf("Failed to parse service: %v", err))
 		return
 	}
 
@@ -61,7 +61,7 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 			"edge", from.Peer.ID,
 			"service_id", service.ID,
 			"error", err)
-		s.sendServiceSyncAck(from, service.ID, service.ID, "error", err.Error())
+		s.SendServiceSyncAck(from, data, false, err.Error())
 		return
 	}
 
@@ -69,13 +69,13 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 	switch operation {
 	case "created":
 		err = s.createService(service)
-	case "updated":
+	case "updated", "enabled", "disabled":
 		err = s.updateService(service)
 	case "deleted":
 		err = s.deleteService(service.ID)
 	default:
 		s.logger.Warn("Invalid service sync operation", "edge", from.Peer.ID, "operation", operation)
-		s.sendServiceSyncAck(from, service.ID, "", "error", "invalid operation")
+		s.SendServiceSyncAck(from, data, false, "invalid operation")
 		return
 	}
 
@@ -85,7 +85,7 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 			"operation", operation,
 			"service_id", service.ID,
 			"error", err)
-		s.sendServiceSyncAck(from, service.ID, "", "error", err.Error())
+		s.SendServiceSyncAck(from, data, false, err.Error())
 		return
 	}
 
@@ -95,7 +95,7 @@ func (s *Server) handleServiceSync(from *PeerConnection, msg *models.SignalingMe
 		"service_id", service.ID)
 
 	// Send success acknowledgment
-	s.sendServiceSyncAck(from, service.ID, service.ID, "success", "")
+	s.SendServiceSyncAck(from, data, true, "service synced successfully")
 }
 
 // handleServiceSyncBatch processes bulk sync on reconnection
@@ -103,23 +103,23 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 	s.logger.Debug("Received batch sync message", "edge", from.Peer.ID, "from", from.Peer.Type)
 
 	// Parse batch message
-	data, ok := msg.Data.(map[string]interface{})
+	data, ok := msg.Data.(map[string]any)
 	if !ok {
-		s.logger.Error("Failed to cast msg.Data to map[string]interface{}",
+		s.logger.Error("Failed to cast msg.Data to map[string]any",
 			"edge", from.Peer.ID,
 			"data_type", fmt.Sprintf("%T", msg.Data),
 			"data_value", fmt.Sprintf("%+v", msg.Data))
-		s.sendError(from.Conn, "Invalid batch sync message")
+		s.SendServiceSyncAck(from, data, false, "Invalid batch sync message")
 		return
 	}
 
-	servicesData, ok := data["services"].([]interface{})
+	servicesData, ok := data["services"].([]any)
 	if !ok {
-		s.logger.Error("Failed to cast services to []interface{}",
+		s.logger.Error("Failed to cast services to []any",
 			"edge", from.Peer.ID,
 			"services_type", fmt.Sprintf("%T", data["services"]),
 			"services_value", fmt.Sprintf("%+v", data["services"]))
-		s.sendError(from.Conn, "Invalid services array")
+		s.SendServiceSyncAck(from, data, false, "Invalid services array")
 		return
 	}
 
@@ -129,7 +129,7 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 			"edge", from.Peer.ID,
 			"count", len(servicesData),
 			"max", maxBatchSize)
-		s.sendError(from.Conn, fmt.Sprintf("Batch size exceeds maximum of %d services", maxBatchSize))
+		s.SendServiceSyncAck(from, data, false, fmt.Sprintf("Batch size exceeds maximum of %d services", maxBatchSize))
 		return
 	}
 
@@ -141,7 +141,7 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 	for i, svcData := range servicesData {
 		s.logger.Debug("Processing batch service", "edge", from.Peer.ID, "index", i)
 
-		svcMap, ok := svcData.(map[string]interface{})
+		svcMap, ok := svcData.(map[string]any)
 		if !ok {
 			s.logger.Warn("Invalid service data in batch",
 				"edge", from.Peer.ID,
@@ -186,7 +186,8 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 			// Service doesn't exist, create it
 			s.logger.Debug("Service not found, creating new",
 				"edge", from.Peer.ID,
-				"service_id", service.ID)
+				"service_id", service.ID,
+				"error", err)
 			err = s.createService(service)
 			if err != nil {
 				s.logger.Warn("Failed to sync service",
@@ -208,20 +209,14 @@ func (s *Server) handleServiceSyncBatch(from *PeerConnection, msg *models.Signal
 		"total", len(servicesData))
 
 	// Send acknowledgment
-	s.sendMessage(from.Conn, &models.SignalingMessage{
-		Type: MessageTypeServiceSyncAck,
-		Data: map[string]interface{}{
-			"status":  "success",
-			"message": fmt.Sprintf("Synced %d services", successCount),
-		},
-	})
+	s.SendServiceSyncAck(from, data, true, fmt.Sprintf("Synced %d services", successCount))
 }
 
 // handleServiceListRequest returns all services for this edge
 func (s *Server) handleServiceListRequest(from *PeerConnection, msg *models.SignalingMessage) {
 	services, err := s.storage.ListEdgeServices(from.Peer.ID)
 	if err != nil {
-		s.sendError(from.Conn, "Failed to retrieve services")
+		s.SendError(from.Conn, "Failed to retrieve services")
 		s.logger.Error("Failed to list services", "edge", from.Peer.ID, "error", err)
 		return
 	}
@@ -232,9 +227,9 @@ func (s *Server) handleServiceListRequest(from *PeerConnection, msg *models.Sign
 		serviceList[i] = *svc
 	}
 
-	s.sendMessage(from.Conn, &models.SignalingMessage{
+	s.SendMessage(from.Conn, &models.SignalingMessage{
 		Type: MessageTypeServiceListResponse,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"services": serviceList,
 		},
 	})
@@ -302,19 +297,24 @@ func (s *Server) deleteService(id string) error {
 	return nil
 }
 
-func (s *Server) sendServiceSyncAck(peer *PeerConnection, localID, serverID, status, errorMsg string) {
-	s.sendMessage(peer.Conn, &models.SignalingMessage{
+func (s *Server) SendServiceSyncAck(peer *PeerConnection, data map[string]any, success bool, message string) {
+	if data == nil {
+		data = make(map[string]any)
+	}
+	data["status"] = "success"
+	if !success {
+		data["status"] = "error"
+	}
+	if message != "" {
+		data["message"] = message
+	}
+	s.SendMessage(peer.Conn, &models.SignalingMessage{
 		Type: MessageTypeServiceSyncAck,
-		Data: map[string]interface{}{
-			"localId":  localID,
-			"serverId": serverID,
-			"status":   status,
-			"error":    errorMsg,
-		},
+		Data: data,
 	})
 }
 
-func (s *Server) parseEdgeService(data map[string]interface{}) (*models.EdgeService, error) {
+func (s *Server) parseEdgeService(data map[string]any) (*models.EdgeService, error) {
 	// Marshal and unmarshal to convert map to struct
 	jsonData, err := json.Marshal(data)
 	if err != nil {

@@ -7,13 +7,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/arqut/arqut-server-ce/pkg/config"
+	"github.com/arqut/arqut-server-ce/pkg/models"
 	"github.com/arqut/arqut-server-ce/pkg/registry"
 	"github.com/arqut/arqut-server-ce/pkg/storage"
-	"github.com/arqut/arqut-server-ce/pkg/models"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,13 +24,15 @@ const (
 	readWait           = 60 * time.Second
 	pingInterval       = 30 * time.Second
 	maxMessageSize     = 512 * 1024 // 512 KB
-	maxBatchSize       = 1000        // Maximum services in batch sync
+	maxBatchSize       = 1000       // Maximum services in batch sync
 	channelSendTimeout = 1 * time.Second
 )
 
+type MessageHandler = func(from *PeerConnection, msg *models.SignalingMessage) bool
+
 // WebSocketConn interface for testability
 type WebSocketConn interface {
-	WriteJSON(v interface{}) error
+	WriteJSON(v any) error
 	WriteMessage(messageType int, data []byte) error
 	Close() error
 	SetWriteDeadline(t time.Time) error
@@ -37,7 +40,8 @@ type WebSocketConn interface {
 
 // PeerConnection represents a WebSocket connection for a peer
 type PeerConnection struct {
-	Peer            *models.Peer
+	User            any          `json:"user,omitempty"` // Authenticated user info
+	Peer            *models.Peer `json:"peer"`
 	Conn            WebSocketConn
 	Ctx             context.Context
 	Cancel          context.CancelFunc
@@ -46,15 +50,16 @@ type PeerConnection struct {
 
 // Server handles WebRTC signaling
 type Server struct {
-	config      *config.SignalingConfig
-	turnConfig  *config.TurnConfig
-	logger      *slog.Logger
-	registry    *registry.Registry
-	storage     storage.ServiceStorage
-	connections map[string]*PeerConnection
-	mu          sync.RWMutex
-	ctx         context.Context
-	cancel      context.CancelFunc
+	config                *config.SignalingConfig
+	turnConfig            *config.TurnConfig
+	logger                *slog.Logger
+	registry              *registry.Registry
+	storage               storage.ServiceStorage
+	connections           map[string]*PeerConnection
+	mu                    sync.RWMutex
+	ctx                   context.Context
+	cancel                context.CancelFunc
+	customMessageHandlers []MessageHandler
 }
 
 // New creates a new signaling server
@@ -102,12 +107,29 @@ func (s *Server) Stop() error {
 	return nil
 }
 
+// GetPeerConnection retrieves a peer connection by ID
+func (s *Server) GetPeerConnection(peerID string) (*PeerConnection, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	conn, exists := s.connections[peerID]
+	return conn, exists
+}
+
+// AddCustomMessageHandler adds a custom message handler
+func (s *Server) AddCustomMessageHandler(handler MessageHandler) {
+	s.customMessageHandlers = append(s.customMessageHandlers, handler)
+}
+
 // RegisterRoutes registers the signaling routes with Fiber
-func (s *Server) RegisterRoutes(router fiber.Router) {
+func (s *Server) RegisterRoutes(router fiber.Router, authMiddleware fiber.Handler) {
 	ws := router.Group("/signaling")
 
 	// WebSocket endpoint: /signaling/ws/:type?id=xxx&edgeid=xxx
-	ws.Get("/ws/:type", s.wsMiddleware(), s.handleWebSocket())
+	if authMiddleware != nil {
+		ws.Get("/ws/:type", authMiddleware, s.wsMiddleware(), s.handleWebSocket())
+	} else {
+		ws.Get("/ws/:type", s.wsMiddleware(), s.handleWebSocket())
+	}
 
 	// REST endpoint for client connection requests
 	ws.Post("/client/connect", s.handleClientConnect())
@@ -149,17 +171,18 @@ func (s *Server) wsMiddleware() fiber.Handler {
 // handleWebSocket handles WebSocket connections
 func (s *Server) handleWebSocket() fiber.Handler {
 	return websocket.New(func(conn *websocket.Conn) {
-		peerType := conn.Params("type")
-		id := conn.Query("id")
-		edgeID := conn.Query("edgeid")
-		publicKey := conn.Query("publickey")
-
 		// Create peer
 		peer := &models.Peer{
-			ID:        id,
-			Type:      peerType,
-			EdgeID:    edgeID,
-			PublicKey: publicKey,
+			ID:        conn.Query("id"),
+			Type:      conn.Params("type"),
+			EdgeID:    conn.Query("edgeid"),
+			PublicKey: conn.Query("publickey"),
+		}
+		if host := conn.Query("host"); host != "" {
+			peer.ServerIPs = strings.Split(host, ",")
+		}
+		if port := conn.Query("port"); port != "" {
+			fmt.Sscanf(port, "%d", &peer.ServerPort)
 		}
 
 		// Create peer connection
@@ -169,10 +192,11 @@ func (s *Server) handleWebSocket() fiber.Handler {
 			Conn:   conn,
 			Ctx:    ctx,
 			Cancel: cancel,
+			User:   conn.Locals("user"),
 		}
 
 		// Initialize client data channels for edge peers (for api-connect-request responses)
-		if peerType == "edge" {
+		if peer.Type == "edge" {
 			peerConn.ClientDataChans = make(map[string]chan *models.SignalingMessage)
 		}
 
@@ -180,10 +204,10 @@ func (s *Server) handleWebSocket() fiber.Handler {
 		s.registry.AddPeer(peer)
 		s.mu.Lock()
 		// Check for existing connection and close it first
-		if oldConn, exists := s.connections[id]; exists {
+		if oldConn, exists := s.connections[peer.ID]; exists {
 			s.logger.Warn("Duplicate connection detected, closing old connection",
-				"id", id,
-				"type", peerType,
+				"id", peer.ID,
+				"type", peer.Type,
 			)
 			if oldConn.Cancel != nil {
 				oldConn.Cancel()
@@ -192,12 +216,12 @@ func (s *Server) handleWebSocket() fiber.Handler {
 				oldConn.Conn.Close()
 			}
 		}
-		s.connections[id] = peerConn
+		s.connections[peer.ID] = peerConn
 		s.mu.Unlock()
 
 		s.logger.Info("Peer connected",
-			"id", id,
-			"type", peerType,
+			"id", peer.ID,
+			"type", peer.Type,
 		)
 
 		// Start connection monitoring
@@ -207,18 +231,18 @@ func (s *Server) handleWebSocket() fiber.Handler {
 		defer func() {
 			cancel()
 			conn.Close()
-			s.registry.RemovePeer(id)
+			s.registry.RemovePeer(peer.ID)
 			s.mu.Lock()
-			delete(s.connections, id)
+			delete(s.connections, peer.ID)
 			s.mu.Unlock()
-			s.logger.Info("Peer disconnected", "id", id, "type", peerType)
+			s.logger.Info("Peer disconnected", "id", peer.ID, "type", peer.Type)
 		}()
 
 		// Configure connection
 		conn.SetReadLimit(maxMessageSize)
 		conn.SetReadDeadline(time.Now().Add(readWait))
 		conn.SetPongHandler(func(string) error {
-			s.registry.UpdateLastPing(id)
+			s.registry.UpdateLastPing(peer.ID)
 			conn.SetReadDeadline(time.Now().Add(readWait))
 			return nil
 		})
@@ -229,18 +253,28 @@ func (s *Server) handleWebSocket() fiber.Handler {
 
 			var msg models.SignalingMessage
 			if err := conn.ReadJSON(&msg); err != nil {
-				s.logger.Debug("WebSocket read error", "peer", id, "error", err)
+				s.logger.Debug("WebSocket read error", "peer", peer.ID, "error", err)
 				break
 			}
 
 			s.logger.Debug("Received message",
-				"from", id,
+				"from", peer.ID,
 				"type", msg.Type,
 				"to", msg.To,
 			)
 
 			// Handle message
-			s.handleMessage(peerConn, &msg)
+			handled := false
+			for _, handler := range s.customMessageHandlers {
+				if handler(peerConn, &msg) {
+					s.logger.Debug("Message handled by custom handler", "peer", peer.ID, "type", msg.Type)
+					handled = true
+					break
+				}
+			}
+			if !handled {
+				s.handleMessage(peerConn, &msg)
+			}
 		}
 	})
 }
@@ -286,15 +320,15 @@ func (s *Server) handleMessage(from *PeerConnection, msg *models.SignalingMessag
 // handleEdgeRegistration handles edge device registration
 func (s *Server) handleEdgeRegistration(from *PeerConnection, msg *models.SignalingMessage) {
 	// Parse registration data
-	dataMap, ok := msg.Data.(map[string]interface{})
+	dataMap, ok := msg.Data.(map[string]any)
 	if !ok {
-		s.sendError(from.Conn, "Invalid registration data")
+		s.SendError(from.Conn, "Invalid registration data")
 		return
 	}
 
 	edgeID, _ := dataMap["edgeId"].(string)
 	if edgeID == "" {
-		s.sendError(from.Conn, "edgeId is required")
+		s.SendError(from.Conn, "edgeId is required")
 		return
 	}
 
@@ -305,14 +339,14 @@ func (s *Server) handleEdgeRegistration(from *PeerConnection, msg *models.Signal
 			"connection_id", from.Peer.ID,
 			"requested_id", edgeID,
 		)
-		s.sendError(from.Conn, "Edge ID must match connection ID")
+		s.SendError(from.Conn, "Edge ID must match connection ID")
 		return
 	}
 
 	s.logger.Info("Edge registered", "edge_id", edgeID)
 
 	// Send confirmation
-	s.sendMessage(from.Conn, &models.SignalingMessage{
+	s.SendMessage(from.Conn, &models.SignalingMessage{
 		Type: "edge:register-success",
 		Data: fiber.Map{
 			"edgeId": edgeID,
@@ -336,7 +370,7 @@ func (s *Server) forwardMessage(msg *models.SignalingMessage) {
 		return
 	}
 
-	if err := s.sendMessage(targetConn.Conn, msg); err != nil {
+	if err := s.SendMessage(targetConn.Conn, msg); err != nil {
 		s.logger.Error("Failed to forward message",
 			"to", msg.To,
 			"type", msg.Type,
@@ -349,7 +383,7 @@ func (s *Server) forwardMessage(msg *models.SignalingMessage) {
 func (s *Server) handleGetPeers(from *PeerConnection) {
 	peers := s.registry.GetAllPeers()
 
-	s.sendMessage(from.Conn, &models.SignalingMessage{
+	s.SendMessage(from.Conn, &models.SignalingMessage{
 		Type: "peer-list",
 		Data: peers,
 	})
@@ -401,7 +435,7 @@ func (s *Server) handleTurnRequest(from *PeerConnection) {
 	s.logger.Debug("Handling turn-request", "peer", from.Peer.ID)
 
 	if s.turnConfig == nil {
-		s.sendError(from.Conn, "TURN configuration not available")
+		s.SendError(from.Conn, "TURN configuration not available")
 		return
 	}
 
@@ -432,7 +466,7 @@ func (s *Server) handleTurnRequest(from *PeerConnection) {
 		URLs:     urls,
 	}
 
-	s.sendMessage(from.Conn, &models.SignalingMessage{
+	s.SendMessage(from.Conn, &models.SignalingMessage{
 		Type: "turn-response",
 		Data: creds,
 	})
@@ -500,7 +534,7 @@ func (s *Server) handleClientConnect() fiber.Handler {
 		}()
 
 		// Send connection request to edge
-		if err := s.sendMessage(edgeConn.Conn, &models.SignalingMessage{
+		if err := s.SendMessage(edgeConn.Conn, &models.SignalingMessage{
 			Type: "api-connect-request",
 			Data: req,
 		}); err != nil {
@@ -526,15 +560,15 @@ func (s *Server) handleClientConnect() fiber.Handler {
 	}
 }
 
-// sendMessage sends a message to a WebSocket connection
-func (s *Server) sendMessage(conn WebSocketConn, msg *models.SignalingMessage) error {
+// SendMessage sends a message to a WebSocket connection
+func (s *Server) SendMessage(conn WebSocketConn, msg *models.SignalingMessage) error {
 	conn.SetWriteDeadline(time.Now().Add(writeWait))
 	return conn.WriteJSON(msg)
 }
 
-// sendError sends an error message to a WebSocket connection
-func (s *Server) sendError(conn WebSocketConn, errMsg string) {
-	s.sendMessage(conn, &models.SignalingMessage{
+// SendError sends an error message to a WebSocket connection
+func (s *Server) SendError(conn WebSocketConn, errMsg string) {
+	s.SendMessage(conn, &models.SignalingMessage{
 		Type: "error",
 		Data: fiber.Map{"error": errMsg},
 	})
