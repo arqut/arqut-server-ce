@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/arqut/arqut-server-ce/internal/middleware"
+	"github.com/arqut/arqut-server-ce/pkg/api"
 	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/arqut/arqut-server-ce/pkg/registry"
 	"github.com/arqut/arqut-server-ce/pkg/signaling"
@@ -158,21 +159,12 @@ func (s *Server) App() *fiber.App {
 
 // errorHandler is the global error handler
 func errorHandler(c *fiber.Ctx, err error) error {
-	code := fiber.StatusInternalServerError
 	message := "Internal Server Error"
-
 	if e, ok := err.(*fiber.Error); ok {
-		code = e.Code
 		message = e.Message
 	}
 
-	return c.Status(code).JSON(&ApiResponse{
-		Success: false,
-		Error: &ApiError{
-			Code:    code,
-			Message: message,
-		},
-	})
+	return api.ErrorInternalServerErrorResp(c, message)
 }
 
 // Helper functions
