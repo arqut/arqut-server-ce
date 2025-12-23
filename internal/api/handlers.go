@@ -1,14 +1,12 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"time"
 
 	"github.com/arqut/arqut-server-ce/pkg/api"
 	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -49,7 +47,7 @@ func (s *Server) handleGenerateCredentials(c *fiber.Ctx) error {
 	}
 
 	// Generate credentials
-	username, password, expiry := s.generateTURNCredentials(req.PeerType, req.PeerID, ttl)
+	username, password, expiry := utils.GenerateTURNCredentials(req.PeerType, req.PeerID, ttl, s.turnCfg.Auth.Secret)
 
 	return api.SuccessResp(c, fiber.Map{
 		"username": username,
@@ -70,7 +68,7 @@ func (s *Server) handleGetICEServers(c *fiber.Ctx) error {
 	}
 
 	// Generate TURN credentials
-	username, password, expiry := s.generateTURNCredentials(peerType, peerID, s.turnCfg.Auth.TTLSeconds)
+	username, password, expiry := utils.GenerateTURNCredentials(peerType, peerID, s.turnCfg.Auth.TTLSeconds, s.turnCfg.Auth.Secret)
 
 	// Build ICE servers list
 	iceServers := []fiber.Map{
@@ -188,21 +186,21 @@ func (s *Server) handleRotateSecrets(c *fiber.Ctx) error {
 
 // Helper functions
 
-// generateTURNCredentials generates coturn-compatible credentials
-func (s *Server) generateTURNCredentials(peerType, peerID string, ttl int) (username, password string, expiry int64) {
-	// Calculate expiry timestamp
-	expiry = time.Now().Unix() + int64(ttl)
+// // generateTURNCredentials generates coturn-compatible credentials
+// func (s *Server) generateTURNCredentials(peerType, peerID string, ttl int) (username, password string, expiry int64) {
+// 	// Calculate expiry timestamp
+// 	expiry = time.Now().Unix() + int64(ttl)
 
-	// Generate username: peerType:peerID:timestamp
-	username = fmt.Sprintf("%s:%s:%d", peerType, peerID, expiry)
+// 	// Generate username: peerType:peerID:timestamp
+// 	username = fmt.Sprintf("%s:%s:%d", peerType, peerID, expiry)
 
-	// Generate password: base64(HMAC-SHA256(secret, username))
-	mac := hmac.New(sha256.New, []byte(s.turnCfg.Auth.Secret))
-	mac.Write([]byte(username))
-	password = base64.StdEncoding.EncodeToString(mac.Sum(nil))
+// 	// Generate password: base64(HMAC-SHA256(secret, username))
+// 	mac := hmac.New(sha256.New, []byte(s.turnCfg.Auth.Secret))
+// 	mac.Write([]byte(username))
+// 	password = base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
-	return username, password, expiry
-}
+// 	return username, password, expiry
+// }
 
 // peerToMap converts a Peer to a map for JSON response
 func peerToMap(peer *models.Peer) fiber.Map {
