@@ -40,7 +40,6 @@ http://your-server-domain:9000/dashboard/services
 Your API key is stored securely in your browser's localStorage and is used to authenticate requests to the services API.
 
 To get your API key:
-
 ```bash
 # Generate a new API key (if you don't have one)
 ./arqut-server apikey generate -c config.yaml
@@ -52,26 +51,20 @@ To get your API key:
 ## Dashboard Interface
 
 ### Statistics Cards
-
 At the top of the dashboard, you'll see four statistics cards:
-
 - **Total Services**: Total number of registered services across all edges
 - **Active Edges**: Number of unique edge instances with registered services
 - **Enabled Services**: Count of services that are currently enabled
 - **Filtered Results**: Number of services matching your current filters
 
 ### Filters
-
 Use the filter controls to narrow down the service list:
-
 - **Filter by Edge ID**: Select a specific edge from the dropdown
 - **Search Service Name**: Type to search service names in real-time
 - **Filter by Status**: Show only enabled or disabled services
 
 ### Service Cards
-
 Each service is displayed in a card showing:
-
 - Edge ID badge
 - Service name and ID
 - Status (enabled/disabled)
@@ -81,7 +74,6 @@ Each service is displayed in a card showing:
 - Created and updated timestamps
 
 ### Theme Toggle
-
 Click the theme toggle button in the top-right corner to switch between light and dark modes. Your preference is saved in browser localStorage.
 
 ## API Endpoint
@@ -124,7 +116,6 @@ Services are displayed with the following information:
 ## Browser Compatibility
 
 The dashboard works in all modern browsers:
-
 - Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
@@ -133,7 +124,6 @@ The dashboard works in all modern browsers:
 ## Security Note
 
 While the dashboard HTML page is publicly accessible, the actual service data is fetched from an authenticated API endpoint. This means:
-
 - Anyone can view the dashboard interface
 - Only requests with valid API keys can retrieve service data
 - For production deployments, consider placing the dashboard behind a reverse proxy with authentication
@@ -141,41 +131,35 @@ While the dashboard HTML page is publicly accessible, the actual service data is
 ## Troubleshooting
 
 ### Dashboard shows "Please configure your API key"
-
 - Click on the API key input field at the top of the dashboard
 - Enter your API key (you can generate one with `./arqut-server apikey generate`)
 - Click "Save Key"
 - The page will automatically reload and fetch services
 
 ### Dashboard shows "Invalid API key"
-
 - Your API key may be incorrect or expired
 - Clear the current key by clicking "Clear" button
 - Generate a new API key: `./arqut-server apikey rotate -c config.yaml`
 - Enter the new key in the dashboard
 
 ### Dashboard shows "Failed to load services"
-
 - Check that the API server is running on the expected port
 - Verify CORS settings if accessing from a different origin
 - Check browser console for detailed error messages
 - Ensure your API key is valid
 
 ### Services not appearing
-
 - Ensure edge devices have successfully synced their services via WebSocket
 - Check that services are enabled in the edge configuration
 - Verify your API key is configured correctly
 - Use browser DevTools Network tab to verify API responses
 
 ### API key not saving
-
 - Ensure browser allows localStorage
 - Check for browser extensions that may block storage
 - Try opening the dashboard in incognito/private mode to test
 
 ### Theme not persisting
-
 - Ensure browser allows localStorage
 - Check for browser extensions that may block storage
 - Try clearing browser cache and reload

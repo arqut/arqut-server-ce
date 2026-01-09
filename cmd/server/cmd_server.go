@@ -7,15 +7,17 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/arqut/arqut-server-ce/internal/acme"
 	"github.com/arqut/arqut-server-ce/internal/api"
-	"github.com/arqut/arqut-server-ce/internal/config"
-	"github.com/arqut/arqut-server-ce/internal/registry"
-	"github.com/arqut/arqut-server-ce/internal/signaling"
 	"github.com/arqut/arqut-server-ce/internal/storage"
-	"github.com/arqut/arqut-server-ce/internal/turn"
-	"github.com/arqut/arqut-server-ce/internal/pkg/logger"
+	"github.com/arqut/arqut-server-ce/pkg/acme"
+	"github.com/arqut/arqut-server-ce/pkg/config"
+	"github.com/arqut/arqut-server-ce/pkg/logger"
+	"github.com/arqut/arqut-server-ce/pkg/registry"
+	"github.com/arqut/arqut-server-ce/pkg/signaling"
+	"github.com/arqut/arqut-server-ce/pkg/turn"
 )
+
+const version = "0.1.0"
 
 // runServer starts the main server
 func runServer() {
@@ -34,7 +36,7 @@ func runServer() {
 
 	log.Info("Starting ArqTurn Server",
 		"domain", cfg.Domain,
-		"version", "0.1.0",
+		"version", version,
 	)
 
 	// Check API key configuration
@@ -84,16 +86,13 @@ func runServer() {
 	// Initialize peer registry
 	peerRegistry := registry.New()
 
-	// Initialize storage for service metadata
-	dbPath := "data/services.db"
-
 	// Ensure data directory exists
 	if err := os.MkdirAll("data", 0o755); err != nil {
 		log.Error("Failed to create data directory", "error", err)
 		os.Exit(1)
 	}
 
-	store, err := storage.NewSQLiteStorage(dbPath)
+	store, err := storage.NewSQLiteStorage(cfg.DBPath)
 	if err != nil {
 		log.Error("Failed to initialize storage", "error", err)
 		os.Exit(1)
@@ -103,7 +102,7 @@ func runServer() {
 		os.Exit(1)
 	}
 	defer store.Close()
-	log.Info("Storage initialized", "path", dbPath)
+	log.Info("Storage initialized", "path", cfg.DBPath)
 
 	// Initialize signaling server (with TURN config and storage)
 	signalingServer := signaling.New(&cfg.Signaling, &cfg.Turn, peerRegistry, store, log.Logger)

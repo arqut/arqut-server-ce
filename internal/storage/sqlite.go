@@ -3,19 +3,23 @@ package storage
 import (
 	"fmt"
 
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/models"
+	pkgstorage "github.com/arqut/arqut-server-ce/pkg/storage"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-// SQLiteStorage implements the Storage interface using SQLite with GORM
+// SQLiteStorage implements the pkgstorage.ServiceStorage interface using SQLite with GORM
 type SQLiteStorage struct {
 	db *gorm.DB
 }
 
+// Compile-time check to ensure SQLiteStorage implements pkgstorage.ServiceStorage
+var _ pkgstorage.ServiceStorage = (*SQLiteStorage)(nil)
+
 // NewSQLiteStorage creates a new SQLite storage instance
-func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
+func NewSQLiteStorage(dbPath string) (pkgstorage.ServiceStorage, error) {
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent), // Suppress SQL logs
 	})

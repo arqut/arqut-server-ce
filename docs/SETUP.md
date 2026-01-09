@@ -89,7 +89,6 @@ arqut-server apikey generate -c /etc/arqut-server/config.yaml
 ```
 
 **Output:**
-
 ```
 New API key generated:
 
@@ -113,7 +112,7 @@ Update these essential settings:
 
 ```yaml
 # Your domain name
-domain: "yourdomain.com"
+domain: "turn.yourdomain.com"
 
 # Your email for Let's Encrypt notifications
 email: "admin@yourdomain.com"
@@ -123,7 +122,7 @@ turn:
   realm: "yourdomain.com"
 
   # YOUR PUBLIC IP ADDRESS (critical!)
-  public_ip: "203.0.113.1" # Replace with your actual public IP
+  public_ip: "203.0.113.1"  # Replace with your actual public IP
 
   # Ports configuration
   ports:
@@ -139,7 +138,7 @@ turn:
   # Authentication settings
   auth:
     mode: "rest"
-    secret: "change-this-to-a-random-secret" # Generate with: openssl rand -base64 32
+    secret: "change-this-to-a-random-secret"  # Generate with: openssl rand -base64 32
     ttl_seconds: 86400
 
 # API settings
@@ -147,7 +146,7 @@ api:
   port: 9000
   cors_origins:
     - "https://yourdomain.com"
-    - "http://localhost:3000" # For development
+    - "http://localhost:3000"  # For development
 
 # Logging
 logging:
@@ -172,7 +171,6 @@ Update the `turn.public_ip` field in your config with this IP.
 ### Step 1: Choose a Subdomain
 
 Pick a subdomain for your TURN server, typically:
-
 - `turn.yourdomain.com` (recommended)
 - `stun.yourdomain.com`
 - `webrtc.yourdomain.com`
@@ -181,19 +179,18 @@ Pick a subdomain for your TURN server, typically:
 
 Log in to your DNS provider (Cloudflare, Route53, NameCheap, etc.) and create an **A record**:
 
-| Type | Name | Value       | TTL |
-| ---- | ---- | ----------- | --- |
-| A    | turn | 203.0.113.1 | 300 |
+| Type | Name | Value | TTL |
+|------|------|-------|-----|
+| A | turn | 203.0.113.1 | 300 |
 
 Where:
-
 - `203.0.113.1` is your server's public IP
 - TTL of 300 (5 minutes) allows quick updates during setup
 
 **For IPv6 support**, also add an AAAA record:
 
-| Type | Name | Value       | TTL |
-| ---- | ---- | ----------- | --- |
+| Type | Name | Value | TTL |
+|------|------|-------|-----|
 | AAAA | turn | 2001:db8::1 | 300 |
 
 ### Step 3: Verify DNS Propagation
@@ -202,14 +199,14 @@ Wait 5-10 minutes, then verify:
 
 ```bash
 # Check A record
-dig yourdomain.com A +short
+dig turn.yourdomain.com A +short
 # Should return: 203.0.113.1
 
 # Check AAAA record (if using IPv6)
-dig yourdomain.com AAAA +short
+dig turn.yourdomain.com AAAA +short
 
 # Alternative using nslookup
-nslookup yourdomain.com
+nslookup turn.yourdomain.com
 ```
 
 **IMPORTANT**: Do not proceed until DNS resolves correctly! Certificate issuance will fail if DNS is not set up.
@@ -221,7 +218,6 @@ ArqTurn supports automatic TLS certificate issuance via Let's Encrypt using ACME
 ### Option 1: HTTP-01 Challenge (Easiest)
 
 **Requirements:**
-
 - Port 80 must be open and accessible from the internet
 - DNS must point to your server
 
@@ -233,32 +229,28 @@ acme:
   challenge: "http-01"
 
 # Rest of config...
-domain: "yourdomain.com"
+domain: "turn.yourdomain.com"
 email: "admin@yourdomain.com"
 ```
 
 **How it works:**
-
 1. Server starts HTTP listener on port 80
-2. Let's Encrypt sends challenge to `http://yourdomain.com/.well-known/acme-challenge/TOKEN`
+2. Let's Encrypt sends challenge to `http://turn.yourdomain.com/.well-known/acme-challenge/TOKEN`
 3. Server responds with challenge response
 4. Certificate issued and saved to `./certs/` directory
 
 **Pros:**
-
 - Simplest method
 - No additional configuration needed
 - Works with any DNS provider
 
 **Cons:**
-
 - Requires port 80 to be open
 - Won't work if port 80 is already in use
 
 ### Option 2: TLS-ALPN-01 Challenge
 
 **Requirements:**
-
 - Port 443 must be open
 - DNS must point to your server
 
@@ -269,36 +261,31 @@ acme:
   enabled: true
   challenge: "tls-alpn-01"
 
-domain: "yourdomain.com"
+domain: "turn.yourdomain.com"
 email: "admin@yourdomain.com"
 ```
 
 **How it works:**
-
 1. Server starts TLS listener on port 443
 2. Let's Encrypt connects via TLS with special ALPN protocol
 3. Server responds with challenge certificate
 4. Certificate issued
 
 **Pros:**
-
 - No need for port 80
 - Can work alongside other HTTPS services
 
 **Cons:**
-
 - Requires port 443 access
 - Slightly more complex than HTTP-01
 
 ### Option 3: DNS-01 Challenge (Most Flexible)
 
 **Requirements:**
-
 - DNS provider API access
 - API credentials from your DNS provider
 
 **Supported DNS Providers:**
-
 - Cloudflare
 - Route53 (AWS)
 - DigitalOcean
@@ -317,7 +304,7 @@ acme:
     CLOUDFLARE_DNS_API_TOKEN: "your-api-token-here"
     CLOUDFLARE_ZONE_API_TOKEN: "your-zone-token-here"
 
-domain: "yourdomain.com"
+domain: "turn.yourdomain.com"
 email: "admin@yourdomain.com"
 ```
 
@@ -335,42 +322,36 @@ acme:
 ```
 
 **How it works:**
-
 1. Server creates TXT record via DNS API
-2. Let's Encrypt queries DNS for `_acme-challenge.yourdomain.com`
+2. Let's Encrypt queries DNS for `_acme-challenge.turn.yourdomain.com`
 3. Server provides challenge response in TXT record
 4. Certificate issued
 
 **Pros:**
-
 - No ports required beyond TURN ports
 - Works behind firewalls/NAT
 - Allows wildcard certificates
 - Most reliable for complex network setups
 
 **Cons:**
-
 - Requires DNS provider API access
 - Need to manage API credentials securely
 
 #### Getting DNS Provider Credentials
 
 **Cloudflare:**
-
 1. Log in to Cloudflare dashboard
 2. Go to "My Profile" → "API Tokens"
 3. Create token with `Zone:DNS:Edit` permissions
 4. Copy token to config
 
 **AWS Route53:**
-
 1. Create IAM user in AWS console
 2. Attach policy: `AmazonRoute53FullAccess` (or custom with `route53:ChangeResourceRecordSets`)
 3. Generate access key
 4. Add to config
 
 **DigitalOcean:**
-
 1. Go to API section in DO control panel
 2. Generate new token with write access
 3. Add to config as `DO_AUTH_TOKEN`
@@ -382,7 +363,7 @@ Before using production Let's Encrypt (which has rate limits), test with staging
 ```yaml
 acme:
   enabled: true
-  ca_url: "https://acme-staging-v02.api.letsencrypt.org/directory" # Staging
+  ca_url: "https://acme-staging-v02.api.letsencrypt.org/directory"  # Staging
   challenge: "http-01"
 ```
 
@@ -394,9 +375,9 @@ Certificates are stored in the `cert_dir` directory (default: `./certs/`):
 
 ```
 certs/
-├── yourdomain.com.crt      # Certificate
-├── yourdomain.com.key      # Private key
-└── yourdomain.com.json     # ACME metadata
+├── turn.yourdomain.com.crt      # Certificate
+├── turn.yourdomain.com.key      # Private key
+└── turn.yourdomain.com.json     # ACME metadata
 ```
 
 **Set proper permissions:**
@@ -520,7 +501,6 @@ curl http://localhost:9000/api/v1/health
 ```
 
 Expected response:
-
 ```json
 {
   "data": {
@@ -542,7 +522,6 @@ curl -H "Authorization: Bearer $API_KEY" \
 ```
 
 Expected response:
-
 ```json
 {
   "data": {
@@ -562,8 +541,8 @@ Use [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/tr
 2. Remove default servers
 3. Add your TURN server:
    ```
-   STUN: yourdomain.com:3478
-   TURN: yourdomain.com:3478
+   STUN: turn.yourdomain.com:3478
+   TURN: turn.yourdomain.com:3478
    ```
 4. Add credentials from step 2
 5. Click "Gather candidates"
@@ -586,10 +565,10 @@ If TLS is enabled:
 
 ```bash
 # Check certificate validity
-openssl s_client -connect yourdomain.com:5349 -servername yourdomain.com < /dev/null
+openssl s_client -connect turn.yourdomain.com:5349 -servername turn.yourdomain.com < /dev/null
 
 # Verify certificate details
-echo | openssl s_client -connect yourdomain.com:5349 -servername yourdomain.com 2>/dev/null | openssl x509 -noout -text
+echo | openssl s_client -connect turn.yourdomain.com:5349 -servername turn.yourdomain.com 2>/dev/null | openssl x509 -noout -text
 ```
 
 ### 6. Test WebSocket Signaling
@@ -745,7 +724,6 @@ sudo nano /etc/logrotate.d/arqut-server
 #### System Monitoring
 
 Monitor key metrics:
-
 - CPU usage
 - Memory usage
 - Network bandwidth
@@ -788,7 +766,6 @@ sudo tar czf /backup/arqut-certs-$(date +%Y%m%d).tar.gz /etc/arqut-server/certs
 ### Server Won't Start
 
 **Check logs:**
-
 ```bash
 sudo journalctl -u arqut-server -n 50
 ```
@@ -796,13 +773,11 @@ sudo journalctl -u arqut-server -n 50
 **Common issues:**
 
 1. **Port already in use:**
-
    ```
    Error: listen tcp :3478: bind: address already in use
    ```
 
    Solution:
-
    ```bash
    # Find what's using the port
    sudo lsof -i :3478
@@ -811,26 +786,22 @@ sudo journalctl -u arqut-server -n 50
    ```
 
 2. **Permission denied:**
-
    ```
    Error: open /etc/arqut-server/certs: permission denied
    ```
 
    Solution:
-
    ```bash
    sudo chown -R arqut:arqut /etc/arqut-server
    sudo chmod 700 /etc/arqut-server/certs
    ```
 
 3. **API key not configured:**
-
    ```
    ERROR: No API key configured
    ```
 
    Solution:
-
    ```bash
    arqut-server apikey generate -c /etc/arqut-server/config.yaml
    ```
@@ -840,17 +811,15 @@ sudo journalctl -u arqut-server -n 50
 **HTTP-01 Challenge:**
 
 1. **DNS not resolving:**
-
    ```bash
-   dig yourdomain.com +short
+   dig turn.yourdomain.com +short
    # Should return your IP
    ```
 
 2. **Port 80 blocked:**
-
    ```bash
    # Test from external machine
-   curl http://yourdomain.com
+   curl http://turn.yourdomain.com
 
    # Check firewall
    sudo ufw status
@@ -863,13 +832,12 @@ sudo journalctl -u arqut-server -n 50
 **DNS-01 Challenge:**
 
 1. **Invalid API credentials:**
-
    - Double-check API token
    - Verify permissions
 
 2. **DNS propagation slow:**
    - Wait 5-10 minutes
-   - Check with `dig _acme-challenge.yourdomain.com TXT`
+   - Check with `dig _acme-challenge.turn.yourdomain.com TXT`
 
 **General:**
 
@@ -882,7 +850,7 @@ ls -la /etc/arqut-server/certs/
 
 # Manual certificate test with lego
 lego --email admin@yourdomain.com \
-     --domains yourdomain.com \
+     --domains turn.yourdomain.com \
      --http \
      run
 ```
@@ -893,16 +861,15 @@ lego --email admin@yourdomain.com \
 
 ```bash
 # Test STUN
-stunclient yourdomain.com 3478
+stunclient turn.yourdomain.com 3478
 
 # Test TURN with turnutils
-turnutils_uclient -v -u "username" -w "password" yourdomain.com
+turnutils_uclient -v -u "username" -w "password" turn.yourdomain.com
 ```
 
 **Common issues:**
 
 1. **Wrong public IP:**
-
    ```bash
    # Verify public IP
    curl ifconfig.me
@@ -913,10 +880,9 @@ turnutils_uclient -v -u "username" -w "password" yourdomain.com
    ```
 
 2. **Firewall blocking UDP:**
-
    ```bash
    # Test UDP connectivity
-   nc -u yourdomain.com 3478
+   nc -u turn.yourdomain.com 3478
 
    # Check firewall rules
    sudo ufw status verbose
@@ -952,7 +918,7 @@ Certificates auto-renew 30 days before expiry. Check:
 
 ```bash
 # Check certificate expiry
-echo | openssl s_client -connect yourdomain.com:5349 2>/dev/null | openssl x509 -noout -dates
+echo | openssl s_client -connect turn.yourdomain.com:5349 2>/dev/null | openssl x509 -noout -dates
 
 # Check server logs for renewal attempts
 sudo journalctl -u arqut-server | grep -i acme

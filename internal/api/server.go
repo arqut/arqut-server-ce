@@ -7,11 +7,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/config"
 	"github.com/arqut/arqut-server-ce/internal/middleware"
-	"github.com/arqut/arqut-server-ce/internal/registry"
-	"github.com/arqut/arqut-server-ce/internal/signaling"
-	"github.com/arqut/arqut-server-ce/internal/storage"
+	"github.com/arqut/arqut-server-ce/pkg/api"
+	"github.com/arqut/arqut-server-ce/pkg/config"
+	"github.com/arqut/arqut-server-ce/pkg/registry"
+	"github.com/arqut/arqut-server-ce/pkg/signaling"
+	"github.com/arqut/arqut-server-ce/pkg/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -20,7 +21,7 @@ import (
 
 // SignalingServer interface to avoid circular dependency
 type SignalingServer interface {
-	RegisterRoutes(router fiber.Router)
+	RegisterRoutes(router fiber.Router, authMiddleware fiber.Handler)
 }
 
 // Server represents the REST API server
@@ -29,14 +30,14 @@ type Server struct {
 	cfg       *config.APIConfig
 	turnCfg   *config.TurnConfig
 	registry  *registry.Registry
-	storage   storage.Storage
+	storage   storage.ServiceStorage
 	signaling SignalingServer
 	tlsConfig *tls.Config
 	logger    *slog.Logger
 }
 
 // New creates a new API server
-func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Registry, storage storage.Storage, sig *signaling.Server, tlsConfig *tls.Config, log *slog.Logger) *Server {
+func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Registry, storage storage.ServiceStorage, sig *signaling.Server, tlsConfig *tls.Config, log *slog.Logger) *Server {
 	app := fiber.New(fiber.Config{
 		AppName:               "ArqTurn REST API",
 		DisableStartupMessage: true,
@@ -46,7 +47,7 @@ func New(cfg *config.APIConfig, turnCfg *config.TurnConfig, reg *registry.Regist
 	// Global middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
-		Format:     "${time} ARQUT-SERVER-CE [INFO] [API] ${status} ${method} ${path} ${latency}\n",
+		Format:     "${time} ARQUT [INFO] [API] ${status} ${method} ${path} ${latency}\n",
 		TimeFormat: "2006/01/02 15:04:05",
 		CustomTags: map[string]logger.LogFunc{
 			"time": func(output logger.Buffer, c *fiber.Ctx, data *logger.Data, extraParam string) (int, error) {
@@ -104,9 +105,9 @@ func (s *Server) setupRoutes() {
 		protected.Get("/peers", s.handleListPeers)
 		protected.Get("/peers/:id", s.handleGetPeer)
 
-		// Service management
-		protected.Get("/services", s.handleListServices)
-		protected.Delete("/services/:id", s.handleDeleteService)
+		// Edge service management
+		protected.Get("/edge/services", s.handleListServices)
+		protected.Delete("/edge/services/:id", s.handleDeleteService)
 	}
 
 	// Admin endpoints (require API key)
@@ -117,7 +118,7 @@ func (s *Server) setupRoutes() {
 
 	// WebSocket signaling routes (under /api/v1/signaling)
 	if s.signaling != nil {
-		s.signaling.RegisterRoutes(api)
+		s.signaling.RegisterRoutes(api, nil)
 	}
 }
 
@@ -158,21 +159,12 @@ func (s *Server) App() *fiber.App {
 
 // errorHandler is the global error handler
 func errorHandler(c *fiber.Ctx, err error) error {
-	code := fiber.StatusInternalServerError
 	message := "Internal Server Error"
-
 	if e, ok := err.(*fiber.Error); ok {
-		code = e.Code
 		message = e.Message
 	}
 
-	return c.Status(code).JSON(&ApiResponse{
-		Success: false,
-		Error: &ApiError{
-			Code:    code,
-			Message: message,
-		},
-	})
+	return api.ErrorInternalServerErrorResp(c, message)
 }
 
 // Helper functions

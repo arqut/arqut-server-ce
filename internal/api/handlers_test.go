@@ -10,41 +10,42 @@ import (
 	"time"
 
 	"github.com/arqut/arqut-server-ce/internal/apikey"
-	"github.com/arqut/arqut-server-ce/internal/config"
-	"github.com/arqut/arqut-server-ce/internal/registry"
-	"github.com/arqut/arqut-server-ce/internal/pkg/logger"
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/config"
+	"github.com/arqut/arqut-server-ce/pkg/logger"
+	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/registry"
+	"github.com/arqut/arqut-server-ce/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Helper to extract data or error from new response structure
-func getData(body map[string]interface{}) map[string]interface{} {
+func getData(body map[string]any) map[string]any {
 	// Check success field
 	if success, ok := body["success"].(bool); ok && !success {
 		return nil
 	}
-	if data, ok := body["data"].(map[string]interface{}); ok {
+	if data, ok := body["data"].(map[string]any); ok {
 		return data
 	}
 	return nil
 }
 
 // Helper to extract array data from response
-func getDataArray(body map[string]interface{}) []interface{} {
+func getDataArray(body map[string]any) []any {
 	// Check success field
 	if success, ok := body["success"].(bool); ok && !success {
 		return nil
 	}
-	if data, ok := body["data"].([]interface{}); ok {
+	if data, ok := body["data"].([]any); ok {
 		return data
 	}
 	return nil
 }
 
-func getError(body map[string]interface{}) string {
+func getError(body map[string]any) string {
 	// New structure: error is an object with message field
-	if errObj, ok := body["error"].(map[string]interface{}); ok {
+	if errObj, ok := body["error"].(map[string]any); ok {
 		if msg, ok := errObj["message"].(string); ok {
 			return msg
 		}
@@ -105,7 +106,7 @@ func TestHealthEndpoint(t *testing.T) {
 
 	assert.Equal(t, 200, resp.StatusCode)
 
-	var result map[string]interface{}
+	var result map[string]any
 	body, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(body, &result)
 	require.NoError(t, err)
@@ -122,20 +123,20 @@ func TestGenerateCredentials(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		payload        map[string]interface{}
+		payload        map[string]any
 		useAuth        bool
 		expectedStatus int
-		checkResponse  func(t *testing.T, body map[string]interface{})
+		checkResponse  func(t *testing.T, body map[string]any)
 	}{
 		{
 			name: "valid request with edge peer",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_type": "edge",
 				"peer_id":   "edge-123",
 			},
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				data := getData(body)
 				assert.NotNil(t, data)
 				assert.NotEmpty(t, data["username"])
@@ -150,13 +151,13 @@ func TestGenerateCredentials(t *testing.T) {
 		},
 		{
 			name: "valid request with client peer",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_type": "client",
 				"peer_id":   "client-456",
 			},
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				data := getData(body)
 				assert.NotNil(t, data)
 				username := data["username"].(string)
@@ -165,14 +166,14 @@ func TestGenerateCredentials(t *testing.T) {
 		},
 		{
 			name: "custom TTL",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_type": "client",
 				"peer_id":   "client-789",
 				"ttl":       3600,
 			},
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				data := getData(body)
 				assert.NotNil(t, data)
 				assert.Equal(t, float64(3600), data["ttl"])
@@ -180,47 +181,47 @@ func TestGenerateCredentials(t *testing.T) {
 		},
 		{
 			name: "missing peer_type",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_id": "peer-123",
 			},
 			useAuth:        true,
 			expectedStatus: 400,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "peer_type and peer_id are required")
 			},
 		},
 		{
 			name: "missing peer_id",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_type": "edge",
 			},
 			useAuth:        true,
 			expectedStatus: 400,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "peer_type and peer_id are required")
 			},
 		},
 		{
 			name: "invalid peer_type",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_type": "invalid",
 				"peer_id":   "peer-123",
 			},
 			useAuth:        true,
 			expectedStatus: 400,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "peer_type must be 'edge' or 'client'")
 			},
 		},
 		{
 			name: "no authentication",
-			payload: map[string]interface{}{
+			payload: map[string]any{
 				"peer_type": "edge",
 				"peer_id":   "peer-123",
 			},
 			useAuth:        false,
 			expectedStatus: 401,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "Missing Authorization header")
 			},
 		},
@@ -240,7 +241,7 @@ func TestGenerateCredentials(t *testing.T) {
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 
-			var result map[string]interface{}
+			var result map[string]any
 			body, _ := io.ReadAll(resp.Body)
 			err = json.Unmarshal(body, &result)
 			require.NoError(t, err)
@@ -261,30 +262,30 @@ func TestGetICEServers(t *testing.T) {
 		queryParams    string
 		useAuth        bool
 		expectedStatus int
-		checkResponse  func(t *testing.T, body map[string]interface{})
+		checkResponse  func(t *testing.T, body map[string]any)
 	}{
 		{
 			name:           "valid request with peer_id",
 			queryParams:    "?peer_id=test-peer",
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				data := getData(body)
 				assert.NotNil(t, data)
-				iceServers := data["ice_servers"].([]interface{})
+				iceServers := data["ice_servers"].([]any)
 				assert.NotEmpty(t, iceServers)
 
 				// Should have at least STUN and TURN servers
 				assert.GreaterOrEqual(t, len(iceServers), 2)
 
 				// Check STUN server
-				stunServer := iceServers[0].(map[string]interface{})
-				urls := stunServer["urls"].([]interface{})
+				stunServer := iceServers[0].(map[string]any)
+				urls := stunServer["urls"].([]any)
 				assert.Contains(t, urls[0].(string), "stun:")
 
 				// Check TURN server
-				turnServer := iceServers[1].(map[string]interface{})
-				turnUrls := turnServer["urls"].([]interface{})
+				turnServer := iceServers[1].(map[string]any)
+				turnUrls := turnServer["urls"].([]any)
 				assert.Contains(t, turnUrls[0].(string), "turn:")
 				assert.NotEmpty(t, turnServer["username"])
 				assert.NotEmpty(t, turnServer["credential"])
@@ -297,11 +298,11 @@ func TestGetICEServers(t *testing.T) {
 			queryParams:    "?peer_id=edge-123&peer_type=edge",
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				data := getData(body)
 				assert.NotNil(t, data)
-				iceServers := data["ice_servers"].([]interface{})
-				turnServer := iceServers[1].(map[string]interface{})
+				iceServers := data["ice_servers"].([]any)
+				turnServer := iceServers[1].(map[string]any)
 				username := turnServer["username"].(string)
 				assert.Contains(t, username, "edge:")
 			},
@@ -311,7 +312,7 @@ func TestGetICEServers(t *testing.T) {
 			queryParams:    "",
 			useAuth:        true,
 			expectedStatus: 400,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "peer_id query parameter is required")
 			},
 		},
@@ -320,7 +321,7 @@ func TestGetICEServers(t *testing.T) {
 			queryParams:    "?peer_id=test-peer",
 			useAuth:        false,
 			expectedStatus: 401,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "Missing Authorization header")
 			},
 		},
@@ -339,7 +340,7 @@ func TestGetICEServers(t *testing.T) {
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 
-			var result map[string]interface{}
+			var result map[string]any
 			body, _ := io.ReadAll(resp.Body)
 			err = json.Unmarshal(body, &result)
 			require.NoError(t, err)
@@ -382,14 +383,14 @@ func TestListPeers(t *testing.T) {
 		queryParams    string
 		useAuth        bool
 		expectedStatus int
-		checkResponse  func(t *testing.T, body map[string]interface{})
+		checkResponse  func(t *testing.T, body map[string]any)
 	}{
 		{
 			name:           "list all peers",
 			queryParams:    "",
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				peers := getDataArray(body)
 				assert.NotNil(t, peers)
 				assert.Len(t, peers, 2)
@@ -400,12 +401,12 @@ func TestListPeers(t *testing.T) {
 			queryParams:    "?type=edge",
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				peers := getDataArray(body)
 				assert.NotNil(t, peers)
 				assert.Len(t, peers, 1)
 
-				peer := peers[0].(map[string]interface{})
+				peer := peers[0].(map[string]any)
 				assert.Equal(t, "edge", peer["type"])
 			},
 		},
@@ -414,12 +415,12 @@ func TestListPeers(t *testing.T) {
 			queryParams:    "?type=client",
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				peers := getDataArray(body)
 				assert.NotNil(t, peers)
 				assert.Len(t, peers, 1)
 
-				peer := peers[0].(map[string]interface{})
+				peer := peers[0].(map[string]any)
 				assert.Equal(t, "client", peer["type"])
 			},
 		},
@@ -428,7 +429,7 @@ func TestListPeers(t *testing.T) {
 			queryParams:    "",
 			useAuth:        false,
 			expectedStatus: 401,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "Missing Authorization header")
 			},
 		},
@@ -447,7 +448,7 @@ func TestListPeers(t *testing.T) {
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 
-			var result map[string]interface{}
+			var result map[string]any
 			body, _ := io.ReadAll(resp.Body)
 			err = json.Unmarshal(body, &result)
 			require.NoError(t, err)
@@ -480,14 +481,14 @@ func TestGetPeer(t *testing.T) {
 		peerID         string
 		useAuth        bool
 		expectedStatus int
-		checkResponse  func(t *testing.T, body map[string]interface{})
+		checkResponse  func(t *testing.T, body map[string]any)
 	}{
 		{
 			name:           "get existing peer",
 			peerID:         "test-peer-123",
 			useAuth:        true,
 			expectedStatus: 200,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				data := getData(body)
 				assert.NotNil(t, data)
 				assert.Equal(t, "test-peer-123", data["id"])
@@ -504,7 +505,7 @@ func TestGetPeer(t *testing.T) {
 			peerID:         "non-existent",
 			useAuth:        true,
 			expectedStatus: 404,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "Peer not found")
 			},
 		},
@@ -513,7 +514,7 @@ func TestGetPeer(t *testing.T) {
 			peerID:         "test-peer-123",
 			useAuth:        false,
 			expectedStatus: 401,
-			checkResponse: func(t *testing.T, body map[string]interface{}) {
+			checkResponse: func(t *testing.T, body map[string]any) {
 				assert.Contains(t, getError(body), "Missing Authorization header")
 			},
 		},
@@ -532,7 +533,7 @@ func TestGetPeer(t *testing.T) {
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 
-			var result map[string]interface{}
+			var result map[string]any
 			body, _ := io.ReadAll(resp.Body)
 			err = json.Unmarshal(body, &result)
 			require.NoError(t, err)
@@ -552,7 +553,7 @@ func TestGenerateTURNCredentials(t *testing.T) {
 	peerID := "test-peer"
 	ttl := 3600
 
-	username, password, expiry := server.generateTURNCredentials(peerType, peerID, ttl)
+	username, password, expiry := utils.GenerateTURNCredentials(peerType, peerID, ttl, server.turnCfg.Auth.Secret)
 
 	// Check username format
 	assert.Contains(t, username, fmt.Sprintf("%s:%s:", peerType, peerID))

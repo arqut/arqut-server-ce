@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/models"
+	pkgstorage "github.com/arqut/arqut-server-ce/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestStorage(t *testing.T) (*SQLiteStorage, func()) {
+func setupTestStorage(t *testing.T) (pkgstorage.ServiceStorage, func()) {
 	// Create temp database
 	dbPath := "test_services.db"
 	storage, err := NewSQLiteStorage(dbPath)

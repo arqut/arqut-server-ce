@@ -1,19 +1,18 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"time"
 
-	"github.com/arqut/arqut-server-ce/internal/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/api"
+	"github.com/arqut/arqut-server-ce/pkg/models"
+	"github.com/arqut/arqut-server-ce/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 // Health check endpoint
 func (s *Server) handleHealth(c *fiber.Ctx) error {
-	return SuccessResp(c, fiber.Map{
+	return api.SuccessResp(c, fiber.Map{
 		"status": "ok",
 		"time":   time.Now().UTC().Format(time.RFC3339),
 	})
@@ -28,17 +27,17 @@ func (s *Server) handleGenerateCredentials(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return ErrorBadRequestResp(c, "Invalid request body")
+		return api.ErrorBadRequestResp(c, "Invalid request body")
 	}
 
 	// Validate required fields
 	if req.PeerType == "" || req.PeerID == "" {
-		return ErrorBadRequestResp(c, "peer_type and peer_id are required")
+		return api.ErrorBadRequestResp(c, "peer_type and peer_id are required")
 	}
 
 	// Validate peer type
 	if req.PeerType != "edge" && req.PeerType != "client" {
-		return ErrorBadRequestResp(c, "peer_type must be 'edge' or 'client'")
+		return api.ErrorBadRequestResp(c, "peer_type must be 'edge' or 'client'")
 	}
 
 	// Use configured TTL if not provided
@@ -48,9 +47,9 @@ func (s *Server) handleGenerateCredentials(c *fiber.Ctx) error {
 	}
 
 	// Generate credentials
-	username, password, expiry := s.generateTURNCredentials(req.PeerType, req.PeerID, ttl)
+	username, password, expiry := utils.GenerateTURNCredentials(req.PeerType, req.PeerID, ttl, s.turnCfg.Auth.Secret)
 
-	return SuccessResp(c, fiber.Map{
+	return api.SuccessResp(c, fiber.Map{
 		"username": username,
 		"password": password,
 		"ttl":      ttl,
@@ -65,11 +64,11 @@ func (s *Server) handleGetICEServers(c *fiber.Ctx) error {
 	peerID := c.Query("peer_id", "")
 
 	if peerID == "" {
-		return ErrorBadRequestResp(c, "peer_id query parameter is required")
+		return api.ErrorBadRequestResp(c, "peer_id query parameter is required")
 	}
 
 	// Generate TURN credentials
-	username, password, expiry := s.generateTURNCredentials(peerType, peerID, s.turnCfg.Auth.TTLSeconds)
+	username, password, expiry := utils.GenerateTURNCredentials(peerType, peerID, s.turnCfg.Auth.TTLSeconds, s.turnCfg.Auth.Secret)
 
 	// Build ICE servers list
 	iceServers := []fiber.Map{
@@ -99,7 +98,7 @@ func (s *Server) handleGetICEServers(c *fiber.Ctx) error {
 		})
 	}
 
-	return SuccessResp(c, fiber.Map{
+	return api.SuccessResp(c, fiber.Map{
 		"ice_servers": iceServers,
 		"expires":     time.Unix(expiry, 0).UTC().Format(time.RFC3339),
 	})
@@ -119,25 +118,25 @@ func (s *Server) handleListPeers(c *fiber.Ctx) error {
 		peers = s.registry.GetAllPeers()
 	}
 
-	return SuccessResp(c, peers)
+	return api.SuccessResp(c, peers)
 }
 
 func (s *Server) handleListServices(c *fiber.Ctx) error {
 	services, err := s.storage.ListAllServices()
 	if err != nil {
-		return ErrorInternalServerErrorResp(c, "Failed to list services")
+		return api.ErrorInternalServerErrorResp(c, "Failed to list services")
 	}
 
-	return SuccessResp(c, services)
+	return api.SuccessResp(c, services)
 }
 
 func (s *Server) handleDeleteService(c *fiber.Ctx) error {
 	err := s.storage.DeleteEdgeService(c.Params("id"))
 	if err != nil {
-		return ErrorInternalServerErrorResp(c, "Failed to delete service")
+		return api.ErrorInternalServerErrorResp(c, "Failed to delete service")
 	}
 
-	return SuccessResp(c, fiber.Map{
+	return api.SuccessResp(c, fiber.Map{
 		"message": "Service deleted successfully",
 	})
 }
@@ -154,10 +153,10 @@ func (s *Server) handleGetPeer(c *fiber.Ctx) error {
 
 	peer, exists := s.registry.GetPeer(peerID)
 	if !exists {
-		return ErrorNotFoundResp(c, "Peer not found")
+		return api.ErrorNotFoundResp(c, "Peer not found")
 	}
 
-	return SuccessResp(c, peerToMap(peer))
+	return api.SuccessResp(c, peerToMap(peer))
 }
 
 // Rotate TURN secrets (admin endpoint)
@@ -168,11 +167,11 @@ func (s *Server) handleRotateSecrets(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		return ErrorBadRequestResp(c, "Invalid request body")
+		return api.ErrorBadRequestResp(c, "Invalid request body")
 	}
 
 	if req.Secret == "" {
-		return ErrorBadRequestResp(c, "secret is required")
+		return api.ErrorBadRequestResp(c, "secret is required")
 	}
 
 	// TODO: Call TURN server's UpdateSecrets method
@@ -180,28 +179,28 @@ func (s *Server) handleRotateSecrets(c *fiber.Ctx) error {
 
 	s.logger.Info("TURN secrets rotation requested")
 
-	return SuccessResp(c, fiber.Map{
+	return api.SuccessResp(c, fiber.Map{
 		"message": "Secrets rotation endpoint - to be implemented",
 	})
 }
 
 // Helper functions
 
-// generateTURNCredentials generates coturn-compatible credentials
-func (s *Server) generateTURNCredentials(peerType, peerID string, ttl int) (username, password string, expiry int64) {
-	// Calculate expiry timestamp
-	expiry = time.Now().Unix() + int64(ttl)
+// // generateTURNCredentials generates coturn-compatible credentials
+// func (s *Server) generateTURNCredentials(peerType, peerID string, ttl int) (username, password string, expiry int64) {
+// 	// Calculate expiry timestamp
+// 	expiry = time.Now().Unix() + int64(ttl)
 
-	// Generate username: peerType:peerID:timestamp
-	username = fmt.Sprintf("%s:%s:%d", peerType, peerID, expiry)
+// 	// Generate username: peerType:peerID:timestamp
+// 	username = fmt.Sprintf("%s:%s:%d", peerType, peerID, expiry)
 
-	// Generate password: base64(HMAC-SHA256(secret, username))
-	mac := hmac.New(sha256.New, []byte(s.turnCfg.Auth.Secret))
-	mac.Write([]byte(username))
-	password = base64.StdEncoding.EncodeToString(mac.Sum(nil))
+// 	// Generate password: base64(HMAC-SHA256(secret, username))
+// 	mac := hmac.New(sha256.New, []byte(s.turnCfg.Auth.Secret))
+// 	mac.Write([]byte(username))
+// 	password = base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
-	return username, password, expiry
-}
+// 	return username, password, expiry
+// }
 
 // peerToMap converts a Peer to a map for JSON response
 func peerToMap(peer *models.Peer) fiber.Map {

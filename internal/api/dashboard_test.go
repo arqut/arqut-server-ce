@@ -86,7 +86,7 @@ func TestEmbeddedHTML(t *testing.T) {
 		assert.Contains(t, html, "stat-filtered")
 
 		// Check for API call with Authorization header
-		assert.Contains(t, html, "/api/v1/services")
+		assert.Contains(t, html, "/api/v1/edge/services")
 		assert.Contains(t, html, "Authorization")
 		assert.Contains(t, html, "Bearer")
 	})

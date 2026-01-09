@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/arqut/arqut-server-ce/internal/apikey"
-	"github.com/arqut/arqut-server-ce/internal/config"
+	"github.com/arqut/arqut-server-ce/pkg/config"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"

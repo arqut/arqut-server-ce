@@ -1,7 +1,6 @@
 # ArqTurn Server - API Documentation
 
 ## Base URL
-
 ```
 http://localhost:9000/api/v1
 ```
@@ -15,7 +14,6 @@ Authorization: Bearer arq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ### Getting an API Key
-
 ```bash
 ./build/arqut-server apikey generate -c config.yaml
 ```
@@ -25,7 +23,6 @@ Authorization: Bearer arq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 All API responses follow a standardized format with `success`, structured `error`, and optional `meta` fields.
 
 ### Success Response
-
 ```json
 {
   "success": true,
@@ -46,7 +43,6 @@ All API responses follow a standardized format with `success`, structured `error
 ```
 
 ### Error Response
-
 ```json
 {
   "success": false,
@@ -79,7 +75,6 @@ All API responses follow a standardized format with `success`, structured `error
 ### Type Definitions
 
 #### TypeScript
-
 ```typescript
 interface ApiResponse<T = any> {
   success: boolean;
@@ -110,7 +105,6 @@ interface Pagination {
 ```
 
 #### Go
-
 ```go
 type ApiResponse struct {
     Success bool             `json:"success"`
@@ -151,7 +145,6 @@ Check server health status.
 **Authentication**: None
 
 **Response**:
-
 ```json
 {
   "success": true,
@@ -163,7 +156,6 @@ Check server health status.
 ```
 
 **Example**:
-
 ```bash
 curl http://localhost:9000/api/v1/health
 ```
@@ -179,17 +171,15 @@ Generate time-limited TURN credentials for a peer.
 **Authentication**: Required
 
 **Request Body**:
-
 ```json
 {
-  "peer_type": "edge", // Required: "edge" or "client"
-  "peer_id": "peer-123", // Required: Unique peer identifier
-  "ttl": 86400 // Optional: Time-to-live in seconds (default: 86400)
+  "peer_type": "edge",     // Required: "edge" or "client"
+  "peer_id": "peer-123",   // Required: Unique peer identifier
+  "ttl": 86400             // Optional: Time-to-live in seconds (default: 86400)
 }
 ```
 
 **Response**:
-
 ```json
 {
   "success": true,
@@ -203,12 +193,10 @@ Generate time-limited TURN credentials for a peer.
 ```
 
 **Errors**:
-
 - `400 Bad Request` - Invalid peer_type or missing required fields
 - `401 Unauthorized` - Missing or invalid API key
 
 **Example**:
-
 ```bash
 curl -X POST http://localhost:9000/api/v1/credentials \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -235,12 +223,10 @@ Get complete ICE server configuration including STUN/TURN servers with credentia
 **Authentication**: Required
 
 **Query Parameters**:
-
 - `peer_id` (required): Unique peer identifier
 - `peer_type` (optional): "edge" or "client" (default: "client")
 
 **Response**:
-
 ```json
 {
   "success": true,
@@ -269,32 +255,26 @@ Get complete ICE server configuration including STUN/TURN servers with credentia
 ```
 
 **Errors**:
-
 - `400 Bad Request` - Missing peer_id parameter
 - `401 Unauthorized` - Missing or invalid API key
 
 **Example**:
-
 ```bash
 curl "http://localhost:9000/api/v1/ice-servers?peer_id=peer-123&peer_type=client" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Usage in WebRTC**:
-
 ```javascript
-const response = await fetch(
-  "http://localhost:9000/api/v1/ice-servers?peer_id=my-peer",
-  {
-    headers: {
-      Authorization: "Bearer YOUR_API_KEY",
-    },
+const response = await fetch('http://localhost:9000/api/v1/ice-servers?peer_id=my-peer', {
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
   }
-);
-const { data } = await response.json();
+});
+const {data} = await response.json();
 
 const pc = new RTCPeerConnection({
-  iceServers: data.ice_servers,
+  iceServers: data.ice_servers
 });
 ```
 
@@ -309,11 +289,9 @@ Get list of all connected peers, optionally filtered by type.
 **Authentication**: Required
 
 **Query Parameters**:
-
 - `type` (optional): Filter by peer type ("edge" or "client")
 
 **Response**:
-
 ```json
 {
   "success": true,
@@ -346,11 +324,9 @@ Get list of all connected peers, optionally filtered by type.
 ```
 
 **Errors**:
-
 - `401 Unauthorized` - Missing or invalid API key
 
 **Examples**:
-
 ```bash
 # List all peers
 curl http://localhost:9000/api/v1/peers \
@@ -376,11 +352,9 @@ Get detailed information about a specific peer.
 **Authentication**: Required
 
 **Path Parameters**:
-
 - `id` (required): Peer identifier
 
 **Response**:
-
 ```json
 {
   "success": true,
@@ -398,12 +372,10 @@ Get detailed information about a specific peer.
 ```
 
 **Errors**:
-
 - `404 Not Found` - Peer not found
 - `401 Unauthorized` - Missing or invalid API key
 
 **Example**:
-
 ```bash
 curl http://localhost:9000/api/v1/peers/edge-001 \
   -H "Authorization: Bearer YOUR_API_KEY"
@@ -420,7 +392,6 @@ Update TURN authentication secrets without restarting the server.
 **Authentication**: Required
 
 **Request Body**:
-
 ```json
 {
   "secret": "new-secret-here",
@@ -429,7 +400,6 @@ Update TURN authentication secrets without restarting the server.
 ```
 
 **Response**:
-
 ```json
 {
   "success": true,
@@ -442,12 +412,10 @@ Update TURN authentication secrets without restarting the server.
 **Note**: Currently returns a placeholder response. Full implementation requires TURN server instance integration.
 
 **Errors**:
-
 - `400 Bad Request` - Missing secret field
 - `401 Unauthorized` - Missing or invalid API key
 
 **Example**:
-
 ```bash
 curl -X POST http://localhost:9000/api/v1/admin/secrets \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -471,34 +439,25 @@ ws://localhost:9000/api/v1/signaling/ws/:type
 ```
 
 **Path Parameters**:
-
 - `type`: "edge" or "client"
 
 **Query Parameters**:
-
 - `id` (required): Unique peer identifier
 - `edgeid` (required for clients): Edge server to connect through
 
 **Examples**:
-
 ```javascript
 // Edge peer connection
-const ws = new WebSocket(
-  "ws://localhost:9000/api/v1/signaling/ws/edge?id=edge-001"
-);
+const ws = new WebSocket('ws://localhost:9000/api/v1/signaling/ws/edge?id=edge-001');
 
 // Client peer connection
-const ws = new WebSocket(
-  "ws://localhost:9000/api/v1/signaling/ws/client?id=client-001&edgeid=edge-001"
-);
+const ws = new WebSocket('ws://localhost:9000/api/v1/signaling/ws/client?id=client-001&edgeid=edge-001');
 ```
 
 ### Message Format
 
 #### Peer List Update
-
 Server broadcasts when peers connect/disconnect:
-
 ```json
 {
   "type": "peer_list",
@@ -507,7 +466,6 @@ Server broadcasts when peers connect/disconnect:
 ```
 
 #### SDP Offer
-
 ```json
 {
   "type": "offer",
@@ -519,7 +477,6 @@ Server broadcasts when peers connect/disconnect:
 ```
 
 #### SDP Answer
-
 ```json
 {
   "type": "answer",
@@ -531,7 +488,6 @@ Server broadcasts when peers connect/disconnect:
 ```
 
 #### ICE Candidate
-
 ```json
 {
   "type": "ice_candidate",
@@ -542,7 +498,6 @@ Server broadcasts when peers connect/disconnect:
 ```
 
 #### Error
-
 ```json
 {
   "type": "error",
@@ -554,13 +509,13 @@ Server broadcasts when peers connect/disconnect:
 
 ## Error Codes
 
-| Code | Description                               |
-| ---- | ----------------------------------------- |
-| 200  | Success                                   |
-| 400  | Bad Request - Invalid parameters          |
-| 401  | Unauthorized - Missing or invalid API key |
-| 404  | Not Found - Resource not found            |
-| 500  | Internal Server Error                     |
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 400 | Bad Request - Invalid parameters |
+| 401 | Unauthorized - Missing or invalid API key |
+| 404 | Not Found - Resource not found |
+| 500 | Internal Server Error |
 
 ## Rate Limiting
 
@@ -580,27 +535,23 @@ api:
 ## Best Practices
 
 ### API Key Security
-
 1. Store API keys securely (environment variables, secrets manager)
 2. Never commit API keys to version control
 3. Rotate keys regularly
 4. Use HTTPS in production
 
 ### TURN Credentials
-
 1. Credentials are time-limited (default 24 hours)
 2. Request new credentials before expiry
 3. Each peer should have unique credentials
 4. Monitor credential usage
 
 ### Peer Management
-
 1. Clean up disconnected peers regularly
 2. Monitor peer count for capacity planning
 3. Implement reconnection logic in clients
 
 ### Error Handling
-
 1. Always check response status codes
 2. Handle authentication errors gracefully
 3. Implement retry logic with exponential backoff
@@ -617,8 +568,8 @@ async function getICEServers(peerId) {
     `http://localhost:9000/api/v1/ice-servers?peer_id=${peerId}`,
     {
       headers: {
-        Authorization: "Bearer YOUR_API_KEY",
-      },
+        'Authorization': 'Bearer YOUR_API_KEY'
+      }
     }
   );
   const result = await response.json();
@@ -629,34 +580,32 @@ async function getICEServers(peerId) {
 }
 
 // 2. Create peer connection
-const iceServers = await getICEServers("my-peer-id");
+const iceServers = await getICEServers('my-peer-id');
 const pc = new RTCPeerConnection({
-  iceServers: iceServers,
+  iceServers: iceServers
 });
 
 // 3. Connect to signaling server
 const ws = new WebSocket(
-  "ws://localhost:9000/api/v1/signaling/ws/client?id=my-peer-id"
+  'ws://localhost:9000/api/v1/signaling/ws/client?id=my-peer-id'
 );
 
 ws.onmessage = async (event) => {
   const msg = JSON.parse(event.data);
 
   switch (msg.type) {
-    case "offer":
+    case 'offer':
       await pc.setRemoteDescription(msg.sdp);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      ws.send(
-        JSON.stringify({
-          type: "answer",
-          to: msg.from,
-          sdp: answer,
-        })
-      );
+      ws.send(JSON.stringify({
+        type: 'answer',
+        to: msg.from,
+        sdp: answer
+      }));
       break;
 
-    case "ice_candidate":
+    case 'ice_candidate':
       await pc.addIceCandidate(msg.candidate);
       break;
   }
@@ -665,13 +614,11 @@ ws.onmessage = async (event) => {
 // 4. Handle ICE candidates
 pc.onicecandidate = (event) => {
   if (event.candidate) {
-    ws.send(
-      JSON.stringify({
-        type: "ice_candidate",
-        to: "target-peer-id",
-        candidate: event.candidate,
-      })
-    );
+    ws.send(JSON.stringify({
+      type: 'ice_candidate',
+      to: 'target-peer-id',
+      candidate: event.candidate
+    }));
   }
 };
 ```

@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arqut Services Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,345 +14,691 @@
             box-sizing: border-box;
         }
 
+        /* Material Design 3 Color System - Light Theme */
         :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --bg-card: #ffffff;
-            --text-primary: #1a202c;
-            --text-secondary: #718096;
-            --border-color: #e2e8f0;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            /* Primary - Green */
+            --md-sys-color-primary: #4A6741;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #CBE9BE;
+            --md-sys-color-on-primary-container: #082004;
+
+            /* Secondary */
+            --md-sys-color-secondary: #54634D;
+            --md-sys-color-on-secondary: #FFFFFF;
+            --md-sys-color-secondary-container: #D7E8CC;
+            --md-sys-color-on-secondary-container: #121F0E;
+
+            /* Tertiary */
+            --md-sys-color-tertiary: #386667;
+            --md-sys-color-on-tertiary: #FFFFFF;
+            --md-sys-color-tertiary-container: #BBECED;
+            --md-sys-color-on-tertiary-container: #002021;
+
+            /* Error */
+            --md-sys-color-error: #BA1A1A;
+            --md-sys-color-on-error: #FFFFFF;
+            --md-sys-color-error-container: #FFDAD6;
+            --md-sys-color-on-error-container: #410002;
+
+            /* Surface */
+            --md-sys-color-background: #F8FAF0;
+            --md-sys-color-on-background: #1A1C18;
+            --md-sys-color-surface: #F8FAF0;
+            --md-sys-color-on-surface: #1A1C18;
+            --md-sys-color-surface-variant: #DFE4D7;
+            --md-sys-color-on-surface-variant: #43483F;
+            --md-sys-color-surface-container-lowest: #FFFFFF;
+            --md-sys-color-surface-container-low: #F2F4EA;
+            --md-sys-color-surface-container: #ECEFE4;
+            --md-sys-color-surface-container-high: #E7E9DE;
+            --md-sys-color-surface-container-highest: #E1E4D9;
+
+            /* Outline */
+            --md-sys-color-outline: #73796E;
+            --md-sys-color-outline-variant: #C3C8BB;
+
+            /* Inverse */
+            --md-sys-color-inverse-surface: #2F312C;
+            --md-sys-color-inverse-on-surface: #F0F2E7;
+            --md-sys-color-inverse-primary: #B0CDA4;
+
+            /* Success */
+            --md-sys-color-success: #4CAF50;
+            --md-sys-color-on-success: #FFFFFF;
+
+            /* Shadows & Elevation */
+            --md-sys-elevation-1: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+            --md-sys-elevation-2: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
+            --md-sys-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.15), 0px 1px 3px rgba(0, 0, 0, 0.3);
+
+            /* Shape */
+            --md-sys-shape-corner-small: 8px;
+            --md-sys-shape-corner-medium: 12px;
+            --md-sys-shape-corner-large: 16px;
+            --md-sys-shape-corner-extra-large: 28px;
         }
 
+        /* Material Design 3 Color System - Dark Theme */
         [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --accent-color: #60a5fa;
-            --accent-hover: #3b82f6;
-            --success-color: #34d399;
-            --danger-color: #f87171;
-            --warning-color: #fbbf24;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            /* Primary - Green */
+            --md-sys-color-primary: #B0CDA4;
+            --md-sys-color-on-primary: #1D3615;
+            --md-sys-color-primary-container: #334D2A;
+            --md-sys-color-on-primary-container: #CBE9BE;
+
+            /* Secondary */
+            --md-sys-color-secondary: #BBCCB1;
+            --md-sys-color-on-secondary: #263422;
+            --md-sys-color-secondary-container: #3C4B37;
+            --md-sys-color-on-secondary-container: #D7E8CC;
+
+            /* Tertiary */
+            --md-sys-color-tertiary: #A0CFD0;
+            --md-sys-color-on-tertiary: #003738;
+            --md-sys-color-tertiary-container: #1E4E4F;
+            --md-sys-color-on-tertiary-container: #BBECED;
+
+            /* Error */
+            --md-sys-color-error: #FFB4AB;
+            --md-sys-color-on-error: #690005;
+            --md-sys-color-error-container: #93000A;
+            --md-sys-color-on-error-container: #FFDAD6;
+
+            /* Surface - Dark greenish */
+            --md-sys-color-background: #1A1C18;
+            --md-sys-color-on-background: #E3E3DB;
+            --md-sys-color-surface: #1A1C18;
+            --md-sys-color-on-surface: #E3E3DB;
+            --md-sys-color-surface-variant: #43483F;
+            --md-sys-color-on-surface-variant: #C3C8BB;
+            --md-sys-color-surface-container-lowest: #0F110D;
+            --md-sys-color-surface-container-low: #1A1C18;
+            --md-sys-color-surface-container: #222620;
+            --md-sys-color-surface-container-high: #2D302A;
+            --md-sys-color-surface-container-highest: #383B34;
+
+            /* Outline */
+            --md-sys-color-outline: #8D9286;
+            --md-sys-color-outline-variant: #43483F;
+
+            /* Inverse */
+            --md-sys-color-inverse-surface: #E3E3DB;
+            --md-sys-color-inverse-on-surface: #2F312C;
+            --md-sys-color-inverse-primary: #4A6741;
+
+            /* Success */
+            --md-sys-color-success: #8BC34A;
+            --md-sys-color-on-success: #1A1C18;
+
+            /* Shadows & Elevation */
+            --md-sys-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.4), 0px 1px 2px rgba(0, 0, 0, 0.6);
+            --md-sys-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.4), 0px 1px 2px rgba(0, 0, 0, 0.6);
+            --md-sys-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.4), 0px 1px 3px rgba(0, 0, 0, 0.6);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
             transition: background-color 0.3s ease, color 0.3s ease;
-            line-height: 1.6;
+            line-height: 1.5;
+            letter-spacing: 0.015em;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 24px;
         }
 
+        /* App Bar / Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 24px;
+            padding: 16px 24px;
+            background: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-large);
         }
 
         .header-title {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 16px;
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            letter-spacing: 0;
         }
 
         .logo {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
-            border-radius: 10px;
+            width: 48px;
+            height: 48px;
+            background: var(--md-sys-color-primary-container);
+            border-radius: var(--md-sys-shape-corner-medium);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.2rem;
+            color: var(--md-sys-color-on-primary-container);
+            font-weight: 600;
+            font-size: 20px;
         }
 
         .controls {
             display: flex;
-            gap: 1rem;
+            gap: 12px;
             align-items: center;
         }
 
-        .theme-toggle {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .theme-toggle:hover {
-            background: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
-        }
-
-        .refresh-btn {
-            background: var(--accent-color);
-            color: white;
+        /* MD3 Buttons */
+        .btn-filled {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
             border: none;
-            border-radius: 8px;
-            padding: 0.5rem 1.5rem;
+            border-radius: 100px;
+            padding: 10px 24px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s;
+            letter-spacing: 0.1px;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+            box-shadow: var(--md-sys-elevation-1);
         }
 
-        .refresh-btn:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
+        .btn-filled:hover {
+            box-shadow: var(--md-sys-elevation-2);
         }
 
-        .refresh-btn:active {
-            transform: translateY(0);
+        .btn-filled:active {
+            box-shadow: var(--md-sys-elevation-1);
         }
 
+        .btn-filled-tonal {
+            background: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+            border: none;
+            border-radius: 100px;
+            padding: 10px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-filled-tonal:hover {
+            background: var(--md-sys-color-secondary-container);
+            box-shadow: var(--md-sys-elevation-1);
+        }
+
+        .btn-outlined {
+            background: transparent;
+            color: var(--md-sys-color-primary);
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 100px;
+            padding: 10px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-outlined:hover {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border-color: var(--md-sys-color-primary);
+        }
+
+        .btn-outlined.authorized {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border-color: transparent;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 100px;
+            border: none;
+            background: transparent;
+            color: var(--md-sys-color-on-surface-variant);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--md-sys-color-surface-container-highest);
+        }
+
+        /* MD3 Cards */
+        .card {
+            background: var(--md-sys-color-surface-container-low);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-elevated {
+            background: var(--md-sys-color-surface-container-low);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 24px;
+            box-shadow: var(--md-sys-elevation-1);
+            margin-bottom: 16px;
+        }
+
+        .card-filled {
+            background: var(--md-sys-color-surface-container-highest);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* Filters Section */
         .filters {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
+            background: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 24px;
+            margin-bottom: 24px;
         }
 
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
+            gap: 16px;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 8px;
         }
 
         label {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
         }
 
+        /* MD3 Outlined Text Fields */
+        .md3-text-field {
+            position: relative;
+            width: 100%;
+        }
+
+        .md3-text-field input,
+        .md3-text-field select {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--md-sys-shape-corner-small);
+            padding: 16px;
+            color: var(--md-sys-color-on-surface);
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .md3-text-field input::placeholder {
+            color: var(--md-sys-color-on-surface-variant);
+            opacity: 1;
+        }
+
+        .md3-text-field input:hover,
+        .md3-text-field select:hover {
+            border-color: var(--md-sys-color-on-surface);
+        }
+
+        .md3-text-field input:focus,
+        .md3-text-field select:focus {
+            border-color: var(--md-sys-color-primary);
+            border-width: 2px;
+            padding: 15px;
+        }
+
+        .md3-text-field.has-label input,
+        .md3-text-field.has-label select {
+            padding-top: 20px;
+            padding-bottom: 12px;
+        }
+
+        .md3-text-field.has-label input:focus,
+        .md3-text-field.has-label select:focus {
+            padding-top: 19px;
+            padding-bottom: 11px;
+        }
+
+        .md3-text-field label {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: var(--md-sys-color-on-surface-variant);
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+            background: transparent;
+            padding: 0 4px;
+            margin-left: -4px;
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: 400;
+        }
+
+        .md3-text-field input:focus + label,
+        .md3-text-field input:not(:placeholder-shown) + label,
+        .md3-text-field select:focus + label,
+        .md3-text-field select:valid + label,
+        .md3-text-field.filled label {
+            top: 0;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: var(--md-sys-color-primary);
+            background: var(--md-sys-color-surface-container);
+        }
+
+        /* Modal context - different background */
+        .modal .md3-text-field input:focus + label,
+        .modal .md3-text-field input:not(:placeholder-shown) + label,
+        .modal .md3-text-field select:focus + label,
+        .modal .md3-text-field select:valid + label,
+        .modal .md3-text-field.filled label {
+            background: var(--md-sys-color-surface-container-high);
+        }
+
+        .md3-text-field input:not(:focus):not(:placeholder-shown) + label,
+        .md3-text-field select:not(:focus):valid + label,
+        .md3-text-field.filled:not(:focus-within) label {
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        /* Select dropdown arrow */
+        .md3-text-field select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2373796E'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+
+        [data-theme="dark"] .md3-text-field select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%238D9286'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        }
+
+        /* Legacy support for non-wrapped inputs */
         input[type="text"], select {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            transition: all 0.2s;
+            background: transparent;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--md-sys-shape-corner-small);
+            padding: 16px;
+            color: var(--md-sys-color-on-surface);
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            outline: none;
+            width: 100%;
+        }
+
+        input[type="text"]:hover, select:hover {
+            border-color: var(--md-sys-color-on-surface);
         }
 
         input[type="text"]:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--md-sys-color-primary);
+            border-width: 2px;
+            padding: 15px;
         }
 
+        select {
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2373796E'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+
+        [data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%238D9286'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        }
+
+        /* Stats Grid */
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: all 0.2s;
+            background: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 20px;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
         }
 
         .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--md-sys-elevation-1);
         }
 
         .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
+            font-size: 12px;
             font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
         }
 
+        /* Services Grid */
         .services-grid {
             display: grid;
-            gap: 1rem;
+            gap: 16px;
         }
 
         .service-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: all 0.2s;
+            background: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 20px;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
         }
 
         .service-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--accent-color);
+            box-shadow: var(--md-sys-elevation-2);
+            background: var(--md-sys-color-surface-container-high);
         }
 
         .service-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .service-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .service-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--md-sys-color-primary-container);
+            border-radius: var(--md-sys-shape-corner-medium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .service-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--md-sys-color-on-primary-container);
+        }
+
+        .service-icon .status-dot {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--md-sys-color-surface-container);
+        }
+
+        .service-icon .status-dot.enabled {
+            background: var(--md-sys-color-success);
+        }
+
+        .service-icon .status-dot.disabled {
+            background: var(--md-sys-color-outline);
         }
 
         .service-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 4px;
         }
 
-        .service-id {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-family: monospace;
+        .service-edge {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface-variant);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .service-edge svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--md-sys-color-on-surface-variant);
         }
 
-        .status-enabled {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
+        /* MD3 Chips */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
         }
 
-        .status-disabled {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
+        .chip-enabled {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+
+        .chip-disabled {
+            background: var(--md-sys-color-surface-container-highest);
+            color: var(--md-sys-color-on-surface-variant);
         }
 
         .service-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--md-sys-color-outline-variant);
         }
 
         .detail-item {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 4px;
         }
 
         .detail-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
+            font-size: 11px;
+            color: var(--md-sys-color-on-surface-variant);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-weight: 500;
         }
 
         .detail-value {
-            font-size: 0.95rem;
-            color: var(--text-primary);
-            font-family: monospace;
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+            font-family: 'Roboto Mono', monospace;
         }
 
-        .edge-badge {
-            background: var(--accent-color);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: inline-block;
-            margin-bottom: 1rem;
-        }
-
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-secondary);
+            padding: 64px 24px;
+            color: var(--md-sys-color-on-surface-variant);
         }
 
         .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+            width: 80px;
+            height: 80px;
+            background: var(--md-sys-color-surface-container-highest);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
         }
 
         .empty-state-text {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 8px;
         }
 
+        /* Loading State */
         .loading {
             text-align: center;
-            padding: 4rem 2rem;
+            padding: 64px 24px;
         }
 
         .spinner {
-            border: 3px solid var(--border-color);
-            border-top: 3px solid var(--accent-color);
+            border: 3px solid var(--md-sys-color-surface-container-highest);
+            border-top: 3px solid var(--md-sys-color-primary);
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+            margin: 0 auto 16px;
         }
 
         @keyframes spin {
@@ -357,16 +706,19 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Error State */
         .error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--danger-color);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            color: var(--danger-color);
-            margin-bottom: 1rem;
+            background: var(--md-sys-color-error-container);
+            border-radius: var(--md-sys-shape-corner-medium);
+            padding: 16px 24px;
+            color: var(--md-sys-color-on-error-container);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        /* Modal styles */
+        /* MD3 Dialog/Modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -374,10 +726,9 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.4);
             z-index: 1000;
-            animation: fadeIn 0.2s ease;
+            animation: fadeIn 0.15s ease;
         }
 
         .modal-overlay.active {
@@ -387,206 +738,162 @@
         }
 
         .modal {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: var(--md-sys-color-surface-container-high);
+            border-radius: var(--md-sys-shape-corner-extra-large);
             padding: 0;
-            max-width: 500px;
+            max-width: 560px;
             width: 90%;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            animation: slideUp 0.3s ease;
+            box-shadow: var(--md-sys-elevation-3);
+            animation: slideUp 0.2s cubic-bezier(0.2, 0, 0, 1);
         }
 
         .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 24px 24px 16px;
         }
 
         .modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--md-sys-color-on-surface);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        .modal-close {
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.25rem;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
+            gap: 12px;
         }
 
         .modal-body {
-            padding: 1.5rem;
+            padding: 0 24px 24px;
+        }
+
+        .modal-description {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface-variant);
+            line-height: 1.5;
+            margin-bottom: 24px;
         }
 
         .api-key-status-section {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
+            background: var(--md-sys-color-surface-container-highest);
+            border-radius: var(--md-sys-shape-corner-medium);
+            padding: 16px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .api-key-status-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface-variant);
             font-weight: 500;
         }
 
         .api-key-status {
-            font-size: 0.875rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-weight: 600;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-weight: 500;
         }
 
         .api-key-status.configured {
-            background: var(--success-color);
-            color: white;
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
         }
 
         .api-key-status.not-configured {
-            background: var(--danger-color);
-            color: white;
+            background: var(--md-sys-color-error-container);
+            color: var(--md-sys-color-on-error-container);
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 24px;
         }
 
         .form-label {
             display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-input {
             width: 100%;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            font-family: monospace;
-            transition: all 0.2s;
+            background: transparent;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--md-sys-shape-corner-small);
+            padding: 16px;
+            color: var(--md-sys-color-on-surface);
+            font-size: 16px;
+            font-family: 'Roboto Mono', monospace;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .form-input:hover {
+            border-color: var(--md-sys-color-on-surface);
         }
 
         .form-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--md-sys-color-primary);
+            border-width: 2px;
+            padding: 15px;
         }
 
         .form-hint {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
+            font-size: 12px;
+            color: var(--md-sys-color-on-surface-variant);
+            margin-top: 8px;
+            line-height: 1.5;
         }
 
         .modal-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--border-color);
+            padding: 24px;
+            padding-top: 16px;
             display: flex;
-            gap: 0.75rem;
-            justify-content: flex-end;
+            gap: 8px;
+            align-items: stretch;
         }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-
-        .btn-primary {
-            background: var(--accent-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--border-color);
-        }
-
-        .authorize-btn {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
+        .modal-footer .btn-text,
+        .modal-footer .btn-filled {
+            height: 40px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
-            font-size: 0.9rem;
+            justify-content: center;
+            padding: 0 24px !important;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .modal-footer .btn-text.error {
+            margin-right: auto;
+        }
+
+        .btn-text {
+            background: transparent;
+            color: var(--md-sys-color-primary);
+            border: none;
+            border-radius: 100px;
+            padding: 10px 24px;
+            cursor: pointer;
+            font-size: 14px;
             font-weight: 500;
+            letter-spacing: 0.1px;
             transition: all 0.2s;
         }
 
-        .authorize-btn:hover {
-            background: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
+        .btn-text:hover {
+            background: var(--md-sys-color-primary-container);
         }
 
-        .authorize-btn.authorized {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: var(--success-color);
-            color: var(--success-color);
+        .btn-text.error {
+            color: var(--md-sys-color-error);
         }
 
-        .authorize-btn.authorized:hover {
-            background: var(--success-color);
-            color: white;
+        .btn-text.error:hover {
+            background: var(--md-sys-color-error-container);
         }
 
         @keyframes fadeIn {
@@ -605,33 +912,47 @@
             }
         }
 
+        /* Responsive */
         @media (max-width: 768px) {
             .container {
-                padding: 1rem;
+                padding: 16px;
             }
 
             header {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 16px;
                 align-items: flex-start;
+                padding: 16px;
             }
 
             .controls {
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-end;
             }
 
             .modal {
                 width: 95%;
-                margin: 1rem;
+                margin: 16px;
             }
 
             .modal-footer {
-                flex-direction: column;
+                flex-wrap: wrap;
             }
 
-            .modal-footer .btn {
+            .modal-footer .btn-text.error {
+                order: 3;
                 width: 100%;
+                justify-content: center;
+                margin-top: 8px;
+                margin-right: 0;
+            }
+
+            .modal-footer .btn-text:not(.error) {
+                order: 1;
+            }
+
+            .modal-footer .btn-filled {
+                order: 2;
             }
 
             .filters-grid {
@@ -639,12 +960,19 @@
             }
 
             .stats {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .service-details {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
+        }
+
+        /* SVG Icons */
+        .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -652,21 +980,30 @@
     <div class="container">
         <header>
             <div class="header-title">
-                <div class="logo">A</div>
-                <h1>Arqut Services Dashboard</h1>
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M4 1h16c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V3c0-1.1.9-2 2-2zm0 8h16c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-4c0-1.1.9-2 2-2zm0 8h16c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-2c0-1.1.9-2 2-2zM9 5h1V3H9v2zm0 8h1v-2H9v2zm0 8h1v-2H9v2zM5 5h1V3H5v2zm0 8h1v-2H5v2zm0 8h1v-2H5v2z"/>
+                    </svg>
+                </div>
+                <h1>Arqut Services</h1>
             </div>
             <div class="controls">
-                <button class="authorize-btn" id="authorize-btn" onclick="openAuthModal()">
-                    <span id="auth-icon">🔓</span>
+                <button class="btn-outlined" id="authorize-btn" onclick="openAuthModal()">
+                    <span class="icon" id="auth-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                    </span>
                     <span id="auth-text">Authorize</span>
                 </button>
-                <button class="theme-toggle" onclick="toggleTheme()">
+                <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
                     <span id="theme-icon">🌙</span>
-                    <span id="theme-text">Dark</span>
                 </button>
-                <button class="refresh-btn" onclick="loadServices()">
-                    <span>↻</span>
-                    <span>Refresh</span>
+                <button class="btn-filled" onclick="loadServices()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                    </svg>
+                    Refresh
                 </button>
             </div>
         </header>
@@ -676,33 +1013,39 @@
             <div class="modal">
                 <div class="modal-header">
                     <div class="modal-title">
-                        <span>🔐</span>
-                        <span>API Authorization</span>
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                        </svg>
+                        API Authorization
                     </div>
-                    <button class="modal-close" onclick="closeAuthModal()">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <p class="modal-description">Enter your API key to access service data. The key is stored locally in your browser.</p>
+
                     <div class="api-key-status-section">
                         <span class="api-key-status-label">Current Status</span>
                         <span class="api-key-status not-configured" id="modal-api-key-status">Not Configured</span>
                     </div>
+
                     <div class="form-group">
-                        <label class="form-label" for="api-key-input">API Key</label>
-                        <input
-                            type="password"
-                            id="api-key-input"
-                            class="form-input"
-                            placeholder="Enter your API key (e.g., arq_...)"
-                        />
+                        <div class="md3-text-field">
+                            <input
+                                type="password"
+                                id="api-key-input"
+                                class="form-input"
+                                placeholder=" "
+                            />
+                            <label for="api-key-input">API Key</label>
+                        </div>
                         <div class="form-hint">
-                            Your API key is stored securely in your browser's localStorage and is only used to authenticate API requests.
+                            Your API key starts with "arq_" and is stored securely in localStorage.
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-danger" onclick="clearAPIKey()">Clear Key</button>
-                    <button class="btn btn-secondary" onclick="closeAuthModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveAPIKey()">Save & Authorize</button>
+                    <button class="btn-text error" onclick="clearAPIKey()">Clear</button>
+                    <button class="btn-text" onclick="closeAuthModal()">Cancel</button>
+                    <button class="btn-filled" onclick="saveAPIKey()">Save</button>
                 </div>
             </div>
         </div>
@@ -710,22 +1053,28 @@
         <div class="filters">
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label for="edge-filter">Filter by Edge ID</label>
-                    <select id="edge-filter" onchange="applyFilters()">
-                        <option value="">All Edges</option>
-                    </select>
+                    <div class="md3-text-field filled">
+                        <select id="edge-filter" onchange="applyFilters()" required>
+                            <option value="">All Edges</option>
+                        </select>
+                        <label for="edge-filter">Edge Device</label>
+                    </div>
                 </div>
                 <div class="filter-group">
-                    <label for="service-search">Search Service Name</label>
-                    <input type="text" id="service-search" placeholder="Type to search..." oninput="applyFilters()">
+                    <div class="md3-text-field">
+                        <input type="text" id="service-search" placeholder=" " oninput="applyFilters()">
+                        <label for="service-search">Search Services</label>
+                    </div>
                 </div>
                 <div class="filter-group">
-                    <label for="status-filter">Filter by Status</label>
-                    <select id="status-filter" onchange="applyFilters()">
-                        <option value="">All Status</option>
-                        <option value="enabled">Enabled</option>
-                        <option value="disabled">Disabled</option>
-                    </select>
+                    <div class="md3-text-field filled">
+                        <select id="status-filter" onchange="applyFilters()" required>
+                            <option value="">All</option>
+                            <option value="enabled">Enabled</option>
+                            <option value="disabled">Disabled</option>
+                        </select>
+                        <label for="status-filter">Status</label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -740,11 +1089,11 @@
                 <div class="stat-value" id="stat-edges">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Enabled Services</div>
+                <div class="stat-label">Enabled</div>
                 <div class="stat-value" id="stat-enabled">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Filtered Results</div>
+                <div class="stat-label">Filtered</div>
                 <div class="stat-value" id="stat-filtered">0</div>
             </div>
         </div>
@@ -798,7 +1147,7 @@
         }
 
         function clearAPIKey() {
-            if (confirm('Are you sure you want to clear the API key?')) {
+            if (confirm('Clear the API key?')) {
                 localStorage.removeItem('arqut_api_key');
                 updateAPIKeyStatus();
                 updateModalStatus();
@@ -818,11 +1167,11 @@
 
             if (hasKey) {
                 authBtn.classList.add('authorized');
-                authIcon.textContent = '🔒';
+                authIcon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg>';
                 authText.textContent = 'Authorized';
             } else {
                 authBtn.classList.remove('authorized');
-                authIcon.textContent = '🔓';
+                authIcon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
                 authText.textContent = 'Authorize';
             }
         }
@@ -832,7 +1181,7 @@
             const hasKey = !!getAPIKey();
 
             if (hasKey) {
-                status.textContent = 'Authorized ✓';
+                status.textContent = 'Authorized';
                 status.className = 'api-key-status configured';
             } else {
                 status.textContent = 'Not Configured';
@@ -842,7 +1191,8 @@
 
         // Theme management
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('theme') ||
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', savedTheme);
             updateThemeButton(savedTheme);
         }
@@ -857,14 +1207,7 @@
 
         function updateThemeButton(theme) {
             const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-            if (theme === 'dark') {
-                icon.textContent = '☀️';
-                text.textContent = 'Light';
-            } else {
-                icon.textContent = '🌙';
-                text.textContent = 'Dark';
-            }
+            icon.textContent = theme === 'dark' ? '☀️' : '🌙';
         }
 
         // Load services from API
@@ -874,7 +1217,13 @@
 
             const apiKey = getAPIKey();
             if (!apiKey) {
-                errorContainer.innerHTML = '<div class="error">⚠️ Please configure your API key above to view services.</div>';
+                errorContainer.innerHTML = `
+                    <div class="error">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                        </svg>
+                        Please configure your API key to view services.
+                    </div>`;
                 container.innerHTML = '';
                 updateStats();
                 return;
@@ -884,7 +1233,7 @@
             errorContainer.innerHTML = '';
 
             try {
-                const response = await fetch('/api/v1/services', {
+                const response = await fetch('/api/v1/edge/services', {
                     headers: {
                         'Authorization': `Bearer ${apiKey}`
                     }
@@ -892,7 +1241,7 @@
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        throw new Error('Invalid API key. Please check your API key and try again.');
+                        throw new Error('Invalid API key. Please check and try again.');
                     }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -908,7 +1257,13 @@
                 applyFilters();
 
             } catch (error) {
-                errorContainer.innerHTML = `<div class="error">Failed to load services: ${error.message}</div>`;
+                errorContainer.innerHTML = `
+                    <div class="error">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                        </svg>
+                        ${error.message}
+                    </div>`;
                 container.innerHTML = '';
                 updateStats();
             }
@@ -971,14 +1326,26 @@
 
             const servicesHTML = filteredServices.map(service => `
                 <div class="service-card">
-                    <div class="edge-badge">Edge: ${escapeHtml(service.edge_id)}</div>
                     <div class="service-header">
-                        <div>
-                            <div class="service-name">${escapeHtml(service.name)}</div>
-                            <div class="service-id">ID: ${escapeHtml(service.id)}</div>
+                        <div class="service-info">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M4 1h16c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V3c0-1.1.9-2 2-2zm0 8h16c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-4c0-1.1.9-2 2-2zm0 8h16c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-2c0-1.1.9-2 2-2zM9 5h1V3H9v2zm0 8h1v-2H9v2zm0 8h1v-2H9v2zM5 5h1V3H5v2zm0 8h1v-2H5v2zm0 8h1v-2H5v2z"/>
+                                </svg>
+                                <div class="status-dot ${service.enabled ? 'enabled' : 'disabled'}"></div>
+                            </div>
+                            <div>
+                                <div class="service-name">${escapeHtml(service.name)}</div>
+                                <div class="service-edge">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                                    </svg>
+                                    ${escapeHtml(service.edge_id)}
+                                </div>
+                            </div>
                         </div>
-                        <span class="status-badge ${service.enabled ? 'status-enabled' : 'status-disabled'}">
-                            ${service.enabled ? '✓ Enabled' : '○ Disabled'}
+                        <span class="chip ${service.enabled ? 'chip-enabled' : 'chip-disabled'}">
+                            ${service.enabled ? 'Enabled' : 'Disabled'}
                         </span>
                     </div>
                     <div class="service-details">
@@ -988,7 +1355,7 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Tunnel Port</div>
-                            <div class="detail-value">${service.tunnel_port || 'N/A'}</div>
+                            <div class="detail-value">${service.tunnel_port || '-'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Local Host</div>
@@ -996,11 +1363,11 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Local Port</div>
-                            <div class="detail-value">${service.local_port || 'N/A'}</div>
+                            <div class="detail-value">${service.local_port || '-'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Created</div>
-                            <div class="detail-value">${formatDate(service.created_at)}</div>
+                            <div class="detail-label">Service ID</div>
+                            <div class="detail-value">${escapeHtml(service.id)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Updated</div>
@@ -1032,9 +1399,9 @@
         }
 
         function formatDate(dateString) {
-            if (!dateString) return 'N/A';
+            if (!dateString) return '-';
             const date = new Date(dateString);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         // Initialize

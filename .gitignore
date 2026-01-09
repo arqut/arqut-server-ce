@@ -40,7 +40,9 @@ go.work.sum
 *.secret
 *.env
 .env
-config.yaml
+.air.*
+config.json
+config.json.legacy
 local*.yaml
 local*.yml
 
@@ -65,4 +67,6 @@ __debug*
 # OS
 .DS_Store
 Thumbs.db
+*.yaml
+*.yml
 .vscode/
