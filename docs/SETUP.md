@@ -47,7 +47,7 @@ Complete guide to setting up and running your ArqTurn server with automatic TLS 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/arqut-server-ce.git
+git clone https://github.com/arqut/arqut-server-ce.git
 cd arqut-server-ce
 
 # Build the server
@@ -58,13 +58,14 @@ make build
 
 ### Option 2: Download Pre-built Binary
 
-```bash
-# Download latest release
-wget https://github.com/yourusername/arqut-server-ce/releases/latest/download/arqut-server-linux-amd64
+Download latest release from GitHub
 
+https://github.com/arqut/arqut-server-ce/releases/latest
+
+```bash
 # Make executable
-chmod +x arqut-server-linux-amd64
-sudo mv arqut-server-linux-amd64 /usr/local/bin/arqut-server
+chmod +x arqut-server-ce_linux-amd64
+sudo mv arqut-server-ce_linux-amd64 /usr/local/bin/arqut-server
 ```
 
 ### Verify Installation
