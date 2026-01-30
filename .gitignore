@@ -43,6 +43,7 @@ go.work.sum
 .air.*
 config.json
 config.json.legacy
+config.yaml
 local*.yaml
 local*.yml
 
@@ -67,6 +68,4 @@ __debug*
 # OS
 .DS_Store
 Thumbs.db
-*.yaml
-*.yml
 .vscode/

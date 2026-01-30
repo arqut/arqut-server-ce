@@ -1,0 +1,41 @@
+version: 2
+
+project_name: arqut-server-ce
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - binary: arqut-server-ce
+    main: ./cmd/server/main.go
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.Commit}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - "386"
+      - arm
+      - arm64
+    goarm:
+      - "7"
+      - "6"
+archives:
+  - formats: ["tar.gz"]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      arqut_server_ce_v{{ .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+
+changelog:
+  disable: true
