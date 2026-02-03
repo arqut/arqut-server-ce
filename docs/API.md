@@ -428,6 +428,122 @@ curl -X POST http://localhost:9000/api/v1/admin/secrets \
 
 ---
 
+### 7. List Edge Services
+
+Get all registered edge services.
+
+**Endpoint**: `GET /edge/services`
+
+**Authentication**: Required
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "svc-abc123",
+      "edge_id": "edge-prod-01",
+      "name": "Web Server",
+      "tunnel_port": 8080,
+      "local_host": "localhost",
+      "local_port": 3000,
+      "protocol": "tcp",
+      "enabled": true,
+      "created_at": "2025-10-19T20:00:00Z",
+      "updated_at": "2025-10-19T20:00:00Z"
+    }
+  ]
+}
+```
+
+**Example**:
+```bash
+curl http://localhost:9000/api/v1/edge/services \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+---
+
+### 8. Delete Edge Service
+
+Delete a specific edge service by ID.
+
+**Endpoint**: `DELETE /edge/services/:id`
+
+**Authentication**: Required
+
+**Path Parameters**:
+- `id` (required): Service identifier
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Service deleted successfully"
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X DELETE http://localhost:9000/api/v1/edge/services/svc-abc123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+---
+
+### 9. Mobile App Binding
+
+Get server binding data with QR code for mobile app configuration.
+
+**Endpoint**: `GET /mobile/binding`
+
+**Authentication**: Required
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "server": "http://192.168.1.100:9000",
+    "api_key": "arq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "version": 1,
+    "qr_image": "data:image/png;base64,iVBORw0KGgo..."
+  }
+}
+```
+
+**Response Fields**:
+- `server`: Full server URL (uses local network IP when accessed from localhost)
+- `api_key`: The API key used for authentication (from Authorization header)
+- `version`: Binding data format version
+- `qr_image`: Base64-encoded PNG QR code containing JSON binding data
+
+**QR Code Content**:
+The QR code encodes a JSON object:
+```json
+{
+  "server": "http://192.168.1.100:9000",
+  "api_key": "arq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "version": 1
+}
+```
+
+**Notes**:
+- When accessed from localhost/127.x.x.x, the server automatically detects the machine's local network IP
+- IP detection prioritizes: 192.168.x.x > 10.x.x.x > 172.16-31.x.x
+- QR code is generated server-side (no CDN dependencies)
+
+**Example**:
+```bash
+curl http://localhost:9000/api/v1/mobile/binding \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+---
+
 ## WebSocket Signaling
 
 ### Connection

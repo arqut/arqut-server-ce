@@ -1,13 +1,18 @@
 package api
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/arqut/arqut-server-ce/pkg/api"
 	"github.com/arqut/arqut-server-ce/pkg/models"
 	"github.com/arqut/arqut-server-ce/pkg/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/skip2/go-qrcode"
 )
 
 // Health check endpoint
@@ -147,6 +152,64 @@ func (s *Server) handleServicesDashboard(c *fiber.Ctx) error {
 	return c.Send(servicesHTML)
 }
 
+// Get mobile app binding data for QR code
+func (s *Server) handleMobileBinding(c *fiber.Ctx) error {
+	// Build server URL from request
+	scheme := c.Protocol()
+	host := c.Hostname()
+
+	// Strip port from hostname if present (some setups include it)
+	if idx := strings.LastIndex(host, ":"); idx != -1 {
+		// Check if it's not an IPv6 address
+		if !strings.Contains(host, "[") {
+			host = host[:idx]
+		}
+	}
+
+	// If running locally, use the machine's local network IP instead of localhost
+	isLocal := host == "localhost" || strings.HasPrefix(host, "127.")
+	if isLocal {
+		if localIP := getLocalIP(); localIP != "" {
+			host = localIP
+		}
+	}
+
+	// Use the configured API port (not c.Port() which returns client's port)
+	port := s.cfg.Port
+	if port != 80 && port != 443 {
+		host = fmt.Sprintf("%s:%d", host, port)
+	}
+
+	// API key from auth header (already validated by middleware)
+	apiKey := strings.TrimPrefix(c.Get("Authorization"), "Bearer ")
+
+	bindingData := map[string]any{
+		"server":  fmt.Sprintf("%s://%s", scheme, host),
+		"api_key": apiKey,
+		"version": 1,
+	}
+
+	// Generate JSON for QR code
+	bindingJSON, err := json.Marshal(bindingData)
+	if err != nil {
+		return api.ErrorInternalServerErrorResp(c, "Failed to generate binding data")
+	}
+
+	// Generate QR code PNG
+	qrPNG, err := qrcode.Encode(string(bindingJSON), qrcode.Medium, 256)
+	if err != nil {
+		return api.ErrorInternalServerErrorResp(c, "Failed to generate QR code")
+	}
+
+	// Return binding data with QR code as base64 data URL
+	return api.SuccessResp(c, fiber.Map{
+		"server":   bindingData["server"],
+		"api_key":  bindingData["api_key"],
+		"version":  bindingData["version"],
+		"qr_image": "data:image/png;base64," + base64.StdEncoding.EncodeToString(qrPNG),
+	})
+}
+
 // Get a specific peer
 func (s *Server) handleGetPeer(c *fiber.Ctx) error {
 	peerID := c.Params("id")
@@ -214,4 +277,49 @@ func peerToMap(peer *models.Peer) fiber.Map {
 		"last_ping":  peer.LastPing.UTC().Format(time.RFC3339),
 		"created_at": peer.CreatedAt.UTC().Format(time.RFC3339),
 	}
+}
+
+// getLocalIP returns the machine's local network IP address (non-loopback)
+// Prioritizes common LAN ranges: 192.168.x.x > 10.x.x.x > 172.16-31.x.x
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+
+	var candidates []net.IP
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ip4 := ipnet.IP.To4(); ip4 != nil {
+				candidates = append(candidates, ip4)
+			}
+		}
+	}
+
+	// Prioritize 192.168.x.x (typical home/office LAN)
+	for _, ip := range candidates {
+		if ip[0] == 192 && ip[1] == 168 {
+			return ip.String()
+		}
+	}
+
+	// Then prefer 10.x.x.x but avoid WSL/VPN ranges (10.255.x.x, 10.242.x.x)
+	for _, ip := range candidates {
+		if ip[0] == 10 && ip[1] != 255 && ip[1] != 242 {
+			return ip.String()
+		}
+	}
+
+	// Then 172.16-31.x.x (private range, but avoid Docker 172.17-19.x.x)
+	for _, ip := range candidates {
+		if ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31 && ip[1] != 17 && ip[1] != 18 && ip[1] != 19 {
+			return ip.String()
+		}
+	}
+
+	// Fall back to any IPv4
+	if len(candidates) > 0 {
+		return candidates[0].String()
+	}
+	return ""
 }

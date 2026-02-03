@@ -10,6 +10,7 @@ The Arqut Server includes a built-in web dashboard for viewing and monitoring re
   - Search by service name
   - Filter by enabled/disabled status
 - **Statistics Overview**: See total services, active edges, enabled services, and filtered results at a glance
+- **Mobile App Binding**: Generate QR code for easy mobile app configuration
 - **Light/Dark Theme**: Toggle between light and dark themes with persistent preference
 - **Auto-refresh**: Dashboard automatically refreshes every 30 seconds
 - **Responsive Design**: Works perfectly on desktop, tablet, and mobile devices
@@ -47,6 +48,32 @@ To get your API key:
 # Check status of existing key
 ./arqut-server apikey status -c config.yaml
 ```
+
+## Mobile App Binding
+
+The dashboard includes a QR code feature for binding mobile apps to the server.
+
+### How to Use
+
+1. Configure your API key in the dashboard (see above)
+2. Click the **Bind** button in the header
+3. A modal will appear with a QR code
+4. Scan the QR code with the Arqut mobile app
+
+### QR Code Contents
+
+The QR code encodes a JSON object containing:
+```json
+{
+  "server": "http://192.168.1.100:9000",
+  "api_key": "arq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "version": 1
+}
+```
+
+### Copy Binding Data
+
+Click the **Copy** button to copy the binding JSON to your clipboard for manual configuration.
 
 ## Dashboard Interface
 

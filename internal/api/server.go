@@ -108,6 +108,9 @@ func (s *Server) setupRoutes() {
 		// Edge service management
 		protected.Get("/edge/services", s.handleListServices)
 		protected.Delete("/edge/services/:id", s.handleDeleteService)
+
+		// Mobile app binding
+		protected.Get("/mobile/binding", s.handleMobileBinding)
 	}
 
 	// Admin endpoints (require API key)

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
+        <style>
         * {
             margin: 0;
             padding: 0;
@@ -974,6 +974,53 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* QR Code Modal */
+        .qr-modal {
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .qr-modal .modal-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .qr-modal .modal-description {
+            text-align: center;
+        }
+
+        #qr-code-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #ffffff;
+            border-radius: var(--md-sys-shape-corner-medium);
+        }
+
+        #qr-code-container canvas {
+            border-radius: 4px;
+        }
+
+        .qr-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .qr-actions .btn-filled-tonal,
+        .qr-actions .btn-filled {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .qr-loading {
+            padding: 48px;
+        }
     </style>
 </head>
 <body>
@@ -995,6 +1042,12 @@
                         </svg>
                     </span>
                     <span id="auth-text">Authorize</span>
+                </button>
+                <button class="btn-filled-tonal" onclick="showQRModal()" title="Bind Mobile App">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13 2h-2v2h2v2h-4v-4h2v-2h4v2zm0 4h2v-2h-2v2zm-2-2v2h-2v-2h2z"/>
+                    </svg>
+                    Bind
                 </button>
                 <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
                     <span id="theme-icon">🌙</span>
@@ -1046,6 +1099,40 @@
                     <button class="btn-text error" onclick="clearAPIKey()">Clear</button>
                     <button class="btn-text" onclick="closeAuthModal()">Cancel</button>
                     <button class="btn-filled" onclick="saveAPIKey()">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Modal for Mobile Binding -->
+        <div class="modal-overlay" id="qr-modal" onclick="closeQRModalOnOverlay(event)">
+            <div class="modal qr-modal">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                        </svg>
+                        Mobile App Binding
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-description">Scan this QR code with the Arqut mobile app to connect to this server.</p>
+                    <div id="qr-code-container">
+                        <div class="qr-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div class="qr-actions">
+                        <button id="copy-binding-btn" class="btn-filled-tonal" onclick="copyBindingData()">
+                            <svg class="copy-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </svg>
+                            <svg class="check-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display: none;">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                        <button class="btn-filled" onclick="closeQRModal()">Done</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1404,6 +1491,104 @@
             return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
+        // QR Code Modal for Mobile Binding
+        let bindingData = null;
+
+        async function showQRModal() {
+            const apiKey = getAPIKey();
+            if (!apiKey) {
+                openAuthModal();
+                return;
+            }
+
+            const modal = document.getElementById('qr-modal');
+            const container = document.getElementById('qr-code-container');
+
+            // Show modal with loading state
+            modal.classList.add('active');
+            container.innerHTML = '<div class="qr-loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch('/api/v1/mobile/binding', {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Invalid API key');
+                    }
+                    throw new Error('Failed to get binding data');
+                }
+
+                const result = await response.json();
+                const data = result.data;
+                bindingData = JSON.stringify({
+                    server: data.server,
+                    api_key: data.api_key,
+                    version: data.version
+                });
+
+                // Clear container and display server-generated QR code
+                container.innerHTML = '';
+
+                const img = document.createElement('img');
+                img.src = data.qr_image;
+                img.alt = 'QR Code for mobile binding';
+                img.style.width = '256px';
+                img.style.height = '256px';
+                container.appendChild(img);
+
+            } catch (error) {
+                container.innerHTML = `<p style="color: var(--md-sys-color-error);">${escapeHtml(error.message)}</p>`;
+                console.error('Binding error:', error);
+            }
+        }
+
+        function closeQRModal() {
+            const modal = document.getElementById('qr-modal');
+            modal.classList.remove('active');
+            bindingData = null;
+        }
+
+        function closeQRModalOnOverlay(event) {
+            if (event.target.id === 'qr-modal') {
+                closeQRModal();
+            }
+        }
+
+        async function copyBindingData() {
+            if (!bindingData) return;
+
+            const btn = document.getElementById('copy-binding-btn');
+            const copyIcon = btn.querySelector('.copy-icon');
+            const checkIcon = btn.querySelector('.check-icon');
+            const copyText = btn.querySelector('.copy-text');
+
+            try {
+                await navigator.clipboard.writeText(bindingData);
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = bindingData;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+
+            // Show success feedback
+            copyIcon.style.display = 'none';
+            checkIcon.style.display = 'inline-flex';
+            copyText.textContent = 'Copied!';
+
+            // Reset after 2 seconds
+            setTimeout(() => {
+                copyIcon.style.display = 'inline-flex';
+                checkIcon.style.display = 'none';
+                copyText.textContent = 'Copy';
+            }, 2000);
+        }
+
         // Initialize
         initTheme();
         updateAPIKeyStatus();
@@ -1416,6 +1601,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeAuthModal();
+                closeQRModal();
             }
         });
     </script>

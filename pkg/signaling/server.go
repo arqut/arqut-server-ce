@@ -474,6 +474,7 @@ func (s *Server) handleTurnRequest(from *PeerConnection) {
 
 // generateTURNCredentials generates coturn-compatible credentials
 func (s *Server) generateTURNCredentials(peerType, peerID string, ttl int) (username, password string, expiry int64) {
+	s.logger.Debug("[TURN] Cred Gen", "secret prefix", s.turnConfig.Auth.Secret[:8])
 	expiry = time.Now().Unix() + int64(ttl)
 	username = fmt.Sprintf("%s:%s:%d", peerType, peerID, expiry)
 
