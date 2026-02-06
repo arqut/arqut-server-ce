@@ -17,7 +17,7 @@ import (
 	"github.com/arqut/arqut-server-ce/pkg/turn"
 )
 
-const version = "0.1.0"
+const version = "0.1.2"
 
 // runServer starts the main server
 func runServer() {
