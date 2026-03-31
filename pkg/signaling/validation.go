@@ -50,13 +50,14 @@ func validateService(service *models.EdgeService) error {
 		return fmt.Errorf("invalid local port: %d (must be 1-65535)", service.LocalPort)
 	}
 
-	// Protocol: http|websocket
+	// Protocol: http|https|ws
 	validProtocols := map[string]bool{
-		"http":      true,
-		"websocket": true,
+		"http":  true,
+		"https": true,
+		"ws":    true,
 	}
 	if !validProtocols[service.Protocol] {
-		return fmt.Errorf("invalid protocol: %s (must be http or websocket)", service.Protocol)
+		return fmt.Errorf("invalid protocol: %s (must be http, https, or ws)", service.Protocol)
 	}
 
 	return nil
